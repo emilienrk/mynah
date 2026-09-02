@@ -174,7 +174,10 @@ struct GeneralSection: View {
                 }
             }
         }
-        .onAppear { availableSounds = SystemSoundLibrary.availableNames }
+        .onAppear {
+            availableSounds = SystemSoundLibrary.availableNames
+            settings.refreshLaunchAtLogin()
+        }
     }
 }
 

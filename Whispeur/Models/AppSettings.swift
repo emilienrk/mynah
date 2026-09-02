@@ -33,7 +33,12 @@ final class AppSettings {
         selectedModelFilename  = ud.string(forKey: "selectedModel") ?? "ggml-base.bin"
         languageCode           = ud.string(forKey: "language") ?? "auto"
         _autoPasteEnabled      = (ud.object(forKey: "autoPaste") as? Bool) ?? true
-        _launchAtLogin         = (ud.object(forKey: "launchAtLogin") as? Bool) ?? false
+        // Not persisted: macOS owns this one. A stale UserDefaults value could
+        // show the toggle on while the app was never registered (fresh install
+        // over leftover preferences) or off after the user removed it from
+        // System Settings > Login Items.
+        _launchAtLogin         = SMAppService.mainApp.status == .enabled
+        ud.removeObject(forKey: "launchAtLogin")
         _confirmationSound     = (ud.object(forKey: "confirmationSound") as? Bool) ?? false
         _startSoundName        = ud.string(forKey: "startSoundName") ?? "Tink"
         _finishSoundName       = ud.string(forKey: "finishSoundName") ?? "Pop"
@@ -124,15 +129,19 @@ final class AppSettings {
         set { _autoPasteEnabled = newValue }
     }
 
-    private var _launchAtLogin: Bool {
-        didSet {
-            UserDefaults.standard.set(_launchAtLogin, forKey: "launchAtLogin")
-            applyLaunchAtLogin(_launchAtLogin)
-        }
-    }
+    private var _launchAtLogin: Bool
     var launchAtLogin: Bool {
         get { _launchAtLogin }
-        set { _launchAtLogin = newValue }
+        set {
+            guard newValue != _launchAtLogin else { return }
+            _launchAtLogin = applyLaunchAtLogin(newValue)
+        }
+    }
+
+    /// Re-reads the system state, which the user can change from
+    /// System Settings > General > Login Items behind our back.
+    func refreshLaunchAtLogin() {
+        _launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
     private var _confirmationSound: Bool {
@@ -320,15 +329,18 @@ final class AppSettings {
 
     // MARK: - Private helpers
 
-    private func applyLaunchAtLogin(_ enabled: Bool) {
+    /// Returns the state actually reached, so a change macOS denies snaps the
+    /// toggle back instead of claiming something that never happened.
+    private func applyLaunchAtLogin(_ enabled: Bool) -> Bool {
         do {
             if enabled {
                 try SMAppService.mainApp.register()
             } else {
                 try SMAppService.mainApp.unregister()
             }
+            return enabled
         } catch {
-            // Non-fatal: the toggle will stay visually set but macOS may deny it.
+            return SMAppService.mainApp.status == .enabled
         }
     }
 }

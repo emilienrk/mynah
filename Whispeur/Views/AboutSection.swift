@@ -12,9 +12,12 @@ import AppKit
 struct AboutSection: View {
     @State private var showsLicenses = false
 
+    private var updater: UpdaterService { .shared }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             identityCard
+            updatesCard
             privacyCard
             licensesCard
         }
@@ -42,17 +45,80 @@ struct AboutSection: View {
                 }
 
                 Spacer()
-
-                Button {
-                    UpdaterService.shared.checkForUpdates()
-                } label: {
-                    Text("Vérifier les mises à jour…")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.white.opacity(0.75))
             }
         }
+    }
+
+    // MARK: - Updates
+
+    private var updatesCard: some View {
+        SettingsCard {
+            VStack(alignment: .leading, spacing: 14) {
+                SectionHeader(icon: "arrow.down.circle.fill", title: "Mises à jour")
+
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(updateStatusLabel)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                        Text(lastCheckLabel)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.35))
+                    }
+
+                    Spacer()
+
+                    Button {
+                        updater.checkForUpdates()
+                    } label: {
+                        HStack(spacing: 6) {
+                            if updater.result == .checking {
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                            Text("Vérifier maintenant")
+                        }
+                        .frame(minWidth: 120)
+                    }
+                    .controlSize(.large)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!updater.canCheckForUpdates)
+                }
+
+                Divider().opacity(0.08)
+
+                SettingsToggleRow(
+                    icon: "clock.arrow.circlepath",
+                    label: "Vérifier automatiquement",
+                    description: "Whispeur cherche une nouvelle version en arrière-plan. Les mises à jour incluent le moteur whisper.cpp intégré.",
+                    isOn: Binding(
+                        get: { updater.automaticallyChecksForUpdates },
+                        set: { updater.automaticallyChecksForUpdates = $0 }
+                    )
+                )
+            }
+        }
+    }
+
+    private var updateStatusLabel: String {
+        switch updater.result {
+        case .checking:
+            return String(localized: "Recherche d'une mise à jour…")
+        case .upToDate:
+            return String(localized: "Whispeur est à jour")
+        case .available(let version):
+            return String(localized: "Version \(version) disponible")
+        case .none:
+            return String(localized: "Version \(Self.shortVersion) installée")
+        }
+    }
+
+    private var lastCheckLabel: String {
+        guard let date = updater.lastCheckDate else {
+            return String(localized: "Aucune vérification depuis l'installation.")
+        }
+        let formatted = date.formatted(date: .abbreviated, time: .shortened)
+        return String(localized: "Dernière vérification : \(formatted)")
     }
 
     // MARK: - Privacy
@@ -149,11 +215,13 @@ struct AboutSection: View {
 
     // MARK: - Content
 
+    private static var shortVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
     private static var versionLabel: String {
-        let info = Bundle.main.infoDictionary
-        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
-        return "Version \(short) (\(build))"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+        return "Version \(shortVersion) (\(build))"
     }
 
     private static var licenseText: String {

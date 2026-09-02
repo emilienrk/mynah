@@ -1837,6 +1837,105 @@
           }
         }
       }
+    },
+    "Vérifier maintenant": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check now"
+          }
+        }
+      }
+    },
+    "Recherche d'une mise à jour…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking for an update…"
+          }
+        }
+      }
+    },
+    "Whispeur est à jour": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whispeur is up to date"
+          }
+        }
+      }
+    },
+    "Version %@ disponible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@ available"
+          }
+        }
+      }
+    },
+    "Version %@ installée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@ installed"
+          }
+        }
+      }
+    },
+    "Dernière vérification : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last checked: %@"
+          }
+        }
+      }
+    },
+    "Aucune vérification depuis l'installation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No check since install."
+          }
+        }
+      }
+    },
+    "Vérifier automatiquement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check automatically"
+          }
+        }
+      }
+    },
+    "Whispeur cherche une nouvelle version en arrière-plan. Les mises à jour incluent le moteur whisper.cpp intégré.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whispeur looks for a new version in the background. Updates include the bundled whisper.cpp engine."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

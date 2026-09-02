@@ -1936,6 +1936,50 @@
           }
         }
       }
+    },
+    "Effacer tout l'historique ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear the whole history?"
+          }
+        }
+      }
+    },
+    "Les %lld transcriptions conservées seront supprimées.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %lld stored transcriptions will be deleted."
+          }
+        }
+      }
+    },
+    "Effacer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "Annuler": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

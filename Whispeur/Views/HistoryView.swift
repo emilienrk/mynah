@@ -7,6 +7,8 @@ import SwiftUI
 
 struct HistoryView: View {
     @Bindable var historyService: HistoryService
+
+    @State private var confirmsClear = false
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -26,11 +28,21 @@ struct HistoryView: View {
                     Spacer()
                     
                     Button(role: .destructive) {
-                        historyService.clearAll()
+                        confirmsClear = true
                     } label: {
                         Label(LocalizedStringKey("Effacer"), systemImage: "trash")
                     }
                     .disabled(historyService.items.isEmpty)
+                    .confirmationDialog(
+                        Text("Effacer tout l'historique ?"),
+                        isPresented: $confirmsClear,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Effacer", role: .destructive) { historyService.clearAll() }
+                        Button("Annuler", role: .cancel) { }
+                    } message: {
+                        Text("Les \(historyService.items.count) transcriptions conservées seront supprimées.")
+                    }
                 }
             }
             

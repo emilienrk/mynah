@@ -16,13 +16,17 @@ final class HistoryService {
     
     private let maxItems = 100
     private let fileName = "history.json"
-    private var fileURL: URL {
+    private let directory: URL
+    private var fileURL: URL { directory.appendingPathComponent(fileName) }
+
+    static var defaultDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDir = appSupport.appendingPathComponent("Whispeur", isDirectory: true)
-        return appDir.appendingPathComponent(fileName)
+        return appSupport.appendingPathComponent("Whispeur", isDirectory: true)
     }
-    
-    init() {
+
+    /// The directory is injectable so tests never touch the user's real history.
+    init(directory: URL = HistoryService.defaultDirectory) {
+        self.directory = directory
         loadHistory()
     }
     
@@ -38,7 +42,10 @@ final class HistoryService {
         saveHistory()
     }
     
+    /// Keeps the cleared transcriptions in a sibling file: clearing is a single
+    /// click away and the history is the only copy of what the user dictated.
     func clearAll() {
+        archiveCurrentFile(as: "history-cleared.json")
         items.removeAll()
         saveHistory()
     }
@@ -58,6 +65,21 @@ final class HistoryService {
             items = try decoder.decode([HistoryItem].self, from: data)
         } catch {
             logger.error("Failed to load history: \(error)")
+            // The next save would overwrite the file we just failed to read, so
+            // put it aside first rather than losing the transcriptions for good.
+            archiveCurrentFile(as: "history-unreadable.json")
+        }
+    }
+
+    private func archiveCurrentFile(as name: String) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: fileURL.path(percentEncoded: false)) else { return }
+        let destination = fileURL.deletingLastPathComponent().appendingPathComponent(name)
+        do {
+            try? fm.removeItem(at: destination)
+            try fm.copyItem(at: fileURL, to: destination)
+        } catch {
+            logger.error("Failed to archive history: \(error)")
         }
     }
     

@@ -1,15 +1,23 @@
 // HistoryServiceTests.swift
 // WhispeurTests
 
+import Foundation
 import Testing
 
 @MainActor
 struct HistoryServiceTests {
 
+    /// A throwaway directory per test: the service otherwise persists into the
+    /// user's real Application Support folder.
+    private func makeService() -> HistoryService {
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("WhispeurTests-\(UUID().uuidString)", isDirectory: true)
+        return HistoryService(directory: directory)
+    }
+
     @Test("Adding an item stores it at the front")
     func addItemInsertsAtFront() {
-        let service = HistoryService()
-        service.clearAll()
+        let service = makeService()
 
         service.add("first")
         service.add("second")
@@ -20,8 +28,7 @@ struct HistoryServiceTests {
 
     @Test("Blank text is not added")
     func blankTextIgnored() {
-        let service = HistoryService()
-        service.clearAll()
+        let service = makeService()
 
         service.add("   ")
         service.add("")
@@ -31,7 +38,7 @@ struct HistoryServiceTests {
 
     @Test("clearAll empties the list")
     func clearAllEmptiesList() {
-        let service = HistoryService()
+        let service = makeService()
         service.add("something")
         service.clearAll()
         #expect(service.items.isEmpty)
@@ -39,8 +46,7 @@ struct HistoryServiceTests {
 
     @Test("List is capped at 100 items")
     func listCappedAt100() {
-        let service = HistoryService()
-        service.clearAll()
+        let service = makeService()
 
         for i in 1...110 {
             service.add("item \(i)")

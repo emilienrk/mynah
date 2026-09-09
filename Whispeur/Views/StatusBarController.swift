@@ -120,6 +120,18 @@ final class StatusBarController: NSObject {
         let triggerItem = NSMenuItem(title: triggerTitle, action: triggerAction, keyEquivalent: "")
         triggerItem.target = self
         triggerItem.isEnabled = triggerAction != nil
+        switch state {
+        case .idle:
+            triggerItem.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: nil)
+        case .loadingModel, .recording:
+            triggerItem.image = NSImage(systemSymbolName: "stop.circle.fill", accessibilityDescription: nil)
+        case .transcribing:
+            triggerItem.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: nil)
+        case .pasting:
+            triggerItem.image = NSImage(systemSymbolName: "doc.on.clipboard", accessibilityDescription: nil)
+        case .error:
+            triggerItem.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: nil)
+        }
         menu.addItem(triggerItem)
 
         menu.addItem(.separator())

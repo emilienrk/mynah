@@ -20,7 +20,7 @@ final class AppSettings {
 
     private init() {
         let ud = UserDefaults.standard
-        // Default hotkey: Dictation key 🎤 (176) — replaces Apple Dictation with Whisper.
+        // Default hotkey: Dictation key (176) — replaces Apple Dictation with Whisper.
         // Migration : un ancien build utilisait 160 par défaut, qui est en
         // réalité Mission Control (F3) ; la touche dictée est 176.
         if ud.integer(forKey: "hotKeyCode") == 160,

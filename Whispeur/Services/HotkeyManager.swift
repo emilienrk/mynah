@@ -38,7 +38,7 @@ struct HotKey: Equatable, Sendable, Codable {
         return parts.joined(separator: " ")
     }
 
-    /// Default: Dictation key 🎤 (176) — replaces Apple Dictation with Whisper.
+    /// Default: Dictation key (176) — replaces Apple Dictation with Whisper.
     /// (160 is Mission Control/F3, not the dictation key.)
     static let defaultHotKey = HotKey(keyCode: 176, modifiers: 0)
 
@@ -276,7 +276,7 @@ final class HotkeyManager {
 
     /// Capture la prochaine touche (ou modificateur seul) comme nouveau raccourci,
     /// en consommant l'événement. C'est la seule voie qui voit les touches
-    /// spéciales comme 🎤 (176), invisibles aux moniteurs NSEvent.
+    /// spéciales comme la touche dictée (176), invisibles aux moniteurs NSEvent.
     /// Retourne true si le tap est actif (la capture aura bien lieu) ;
     /// false si l'appelant doit se replier sur des moniteurs NSEvent.
     @discardableResult
@@ -352,7 +352,7 @@ final class HotkeyManager {
 
         CGEvent.tapEnable(tap: tap, enable: true)
         isListening = true
-        logger.info("Event tap installed ✅")
+        logger.info("Event tap installed")
     }
 
     private func shutdownTap() {

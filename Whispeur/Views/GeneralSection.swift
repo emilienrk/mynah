@@ -321,7 +321,7 @@ struct HotKeyRecorder: View {
         NSApp.activate()
 
         // Voie principale : capture via le CGEventTap du HotkeyManager.
-        // C'est la seule source qui voit les touches spéciales (🎤 dictée,
+        // C'est la seule source qui voit les touches spéciales (dictée,
         // Mission Control…) et qui les consomme avant que macOS ne réagisse.
         if hotkeyManager.beginHotKeyCapture({ captured in
             if let captured { hotKey = captured }
@@ -331,7 +331,7 @@ struct HotKeyRecorder: View {
         }
 
         // Repli sans permission d'accessibilité : moniteurs NSEvent
-        // (ne voit pas les touches spéciales comme 🎤).
+        // (ne voit pas les touches spéciales comme la touche dictée).
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 {
                 stopRecording()

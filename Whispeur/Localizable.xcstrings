@@ -1332,13 +1332,13 @@
         }
       }
     },
-    "Maintenez la touche 🎤 de votre clavier, dites une phrase, puis relâchez. Le texte apparaît ci-dessous.": {
+    "Maintenez la touche de votre clavier, dites une phrase, puis relâchez. Le texte apparaît ci-dessous.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hold the 🎤 key on your keyboard, say a sentence, then release. The text appears below."
+            "value": "Hold the dictation key on your keyboard, say a sentence, then release. The text appears below."
           }
         }
       }
@@ -1992,24 +1992,24 @@
         }
       }
     },
-    "Touche dictée & accessibilité": {
+    "Raccourci & accessibilité": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dictation key & accessibility"
+            "value": "Shortcut & Accessibility"
           }
         }
       }
     },
-    "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter la touche 🎤 (F5) et coller le texte directement dans vos applications.": {
+    "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter votre touche ou combinaison de touches et coller le texte directement dans vos applications.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Whispeur needs Accessibility permission to listen for the 🎤 (F5) key and paste text directly into your apps."
+            "value": "Whispeur needs Accessibility permission to detect your shortcut key or key combination and paste text directly into your apps."
           }
         }
       }
@@ -2058,13 +2058,13 @@
         }
       }
     },
-    "Maintenez votre touche de dictée ou utilisez le bouton micro pour faire un essai.": {
+    "Maintenez votre touche ou combinaison, ou utilisez le bouton micro pour faire un essai.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hold your dictation key or use the microphone button to try it out."
+            "value": "Hold your key or combination, or use the microphone button to try it out."
           }
         }
       }
@@ -2113,13 +2113,24 @@
         }
       }
     },
-    "Par défaut : 🎤 (F5). Cliquez pour changer si besoin.": {
+    "Personnalisez votre touche ou combinaison de touches.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Default: 🎤 (F5). Click to change if needed."
+            "value": "Customize your key or key combination."
+          }
+        }
+      }
+    },
+    "Si votre raccourci utilise la touche dictée de macOS, désactivez-la dans les Réglages Système pour éviter les conflits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If your shortcut uses the macOS dictation key, disable it in System Settings to prevent conflicts."
           }
         }
       }

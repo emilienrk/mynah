@@ -113,8 +113,8 @@ struct OnboardingView: View {
     private var accessibilityPage: some View {
         pageLayout(
             icon: "hand.tap.fill",
-            title: "Touche dictée & accessibilité",
-            subtitle: "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter la touche 🎤 (F5) et coller le texte directement dans vos applications."
+            title: "Raccourci & accessibilité",
+            subtitle: "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter votre touche ou combinaison de touches et coller le texte directement dans vos applications."
         ) {
             VStack(spacing: 12) {
                 if isAXTrusted {
@@ -355,7 +355,7 @@ struct OnboardingView: View {
         pageLayout(
             icon: "keyboard",
             title: "Essayez la dictée",
-            subtitle: "Maintenez votre touche de dictée ou utilisez le bouton micro pour faire un essai."
+            subtitle: "Maintenez votre touche ou combinaison, ou utilisez le bouton micro pour faire un essai."
         ) {
             VStack(spacing: 10) {
                 // Transcription / recording status box
@@ -413,10 +413,10 @@ struct OnboardingView: View {
                             .foregroundStyle(.white.opacity(0.5))
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Touche active")
+                            Text("Raccourci clavier")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.85))
-                            Text("Par défaut : 🎤 (F5). Cliquez pour changer si besoin.")
+                            Text("Personnalisez votre touche ou combinaison de touches.")
                                 .font(.system(size: 10))
                                 .foregroundStyle(.white.opacity(0.4))
                         }
@@ -437,7 +437,7 @@ struct OnboardingView: View {
                     }
                 }
 
-                Text("La dictée d'Apple utilise la même touche et joue ses propres bips. Désactivez-la pour laisser la touche à Whispeur.")
+                Text("Si votre raccourci utilise la touche dictée de macOS, désactivez-la dans les Réglages Système pour éviter les conflits.")
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.35))
                     .multilineTextAlignment(.center)

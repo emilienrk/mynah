@@ -47,7 +47,7 @@ final class StatusBarController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
         configureButton()
-        logger.info("Initialized ✅")
+        logger.info("Initialized")
     }
 
     // MARK: - Button setup

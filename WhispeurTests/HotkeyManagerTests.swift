@@ -60,7 +60,7 @@ struct HotkeyManagerTests {
         #expect(later != nil)
     }
 
-    // MARK: - Bug 2/3 : touche dictée 🎤 (keycode 176)
+    // MARK: - Bug 2/3 : touche dictée (keycode 176)
 
     @Test("Le raccourci par défaut est la touche dictée (176), pas Mission Control (160)")
     func defaultHotKeyIsDictationKey() {
@@ -77,8 +77,8 @@ struct HotkeyManagerTests {
         let down = manager.handleRawEvent(type: .keyDown, event: keyEvent(176, down: true))
         let up   = manager.handleRawEvent(type: .keyUp,   event: keyEvent(176, down: false))
 
-        #expect(down == nil, "keyDown 🎤 doit être consommé")
-        #expect(up == nil, "keyUp 🎤 doit être consommé")
+        #expect(down == nil, "keyDown dictée doit être consommé")
+        #expect(up == nil, "keyUp dictée doit être consommé")
     }
 
     // MARK: - Répétition automatique en mode Basculer

@@ -109,7 +109,7 @@ final class AudioCaptureService {
         }
 
         state = .recording
-        logger.info("Recording started 🎤")
+        logger.info("Recording started")
     }
 
     func stopRecording() -> [Float] {
@@ -126,7 +126,7 @@ final class AudioCaptureService {
         // Drain accumulated samples on the MainActor (safe).
         let captured = accumulator.drainAll()
         state = .idle
-        logger.info("Recording stopped — \(captured.count) samples (\(String(format: "%.2f", Double(captured.count) / 16_000.0))s) 🔴")
+        logger.info("Recording stopped — \(captured.count) samples (\(String(format: "%.2f", Double(captured.count) / 16_000.0))s)")
         return captured
     }
 

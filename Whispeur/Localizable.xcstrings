@@ -293,7 +293,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Request Access"
+            "value": "Request access"
           }
         }
       }
@@ -1613,7 +1613,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "VAD model missing — turn it off and back on to restart the download."
+            "value": "VAD model missing — disable and re-enable to retry download."
           }
         }
       }
@@ -2131,6 +2131,193 @@
           "stringUnit": {
             "state": "translated",
             "value": "If your shortcut uses the macOS dictation key, disable it in System Settings to prevent conflicts."
+          }
+        }
+      }
+    },
+    "Paramètres": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "Permissions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions"
+          }
+        }
+      }
+    },
+    "Historique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "Démarrer l'enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start recording"
+          }
+        }
+      }
+    },
+    "Collage en cours…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasting…"
+          }
+        }
+      }
+    },
+    "Au démarrage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On start"
+          }
+        }
+      }
+    },
+    "Copier le texte": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy text"
+          }
+        }
+      }
+    },
+    "Exemples": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Examples"
+          }
+        }
+      }
+    },
+    "Installation…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing…"
+          }
+        }
+      }
+    },
+    "Accès accordé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access granted"
+          }
+        }
+      }
+    },
+    "Non accordé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not granted"
+          }
+        }
+      }
+    },
+    "Non déterminé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not determined"
+          }
+        }
+      }
+    },
+    "Accès refusé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access denied"
+          }
+        }
+      }
+    },
+    "Accès restreint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access restricted"
+          }
+        }
+      }
+    },
+    "Téléchargement du modèle VAD… %lld %%": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading VAD model… %lld%%"
+          }
+        }
+      }
+    },
+    "Échec du téléchargement : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download failed: %@"
+          }
+        }
+      }
+    },
+    "Marquez jusqu'à %lld modèles en favori pour un accès rapide depuis la barre de menu.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Star up to %lld models for quick access from the menu bar."
           }
         }
       }

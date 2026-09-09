@@ -162,4 +162,19 @@ struct EngineConfigTests {
         #expect(s.onboardingStepRaw == 0)
         #expect(UserDefaults.standard.object(forKey: "onboardingStep") == nil)
     }
+
+    @Test("uiLanguage normalizes to fr or en and persists to AppleLanguages")
+    func uiLanguageNormalizes() {
+        let s = AppSettings.shared
+        let saved = s.uiLanguage
+        defer { s.uiLanguage = saved }
+
+        s.uiLanguage = "en-US"
+        #expect(s.uiLanguage == "en")
+        #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["en"])
+
+        s.uiLanguage = "fr-FR"
+        #expect(s.uiLanguage == "fr")
+        #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["fr"])
+    }
 }

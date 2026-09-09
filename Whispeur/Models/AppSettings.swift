@@ -62,7 +62,7 @@ final class AppSettings {
         }
         
         if let appleLangs = ud.stringArray(forKey: "AppleLanguages"), let first = appleLangs.first {
-            _uiLanguage = first
+            _uiLanguage = first.hasPrefix("fr") ? "fr" : "en"
         } else {
             _uiLanguage = Locale.preferredLanguages.first?.hasPrefix("fr") == true ? "fr" : "en"
         }
@@ -119,7 +119,7 @@ final class AppSettings {
     }
     var uiLanguage: String {
         get { _uiLanguage }
-        set { _uiLanguage = newValue }
+        set { _uiLanguage = newValue.hasPrefix("fr") ? "fr" : "en" }
     }
 
     private var _autoPasteEnabled: Bool {

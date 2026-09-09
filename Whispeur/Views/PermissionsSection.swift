@@ -78,7 +78,7 @@ struct PermissionsSection: View {
         }
     }
 
-    private var micStatusLabel: String {
+    private var micStatusLabel: LocalizedStringKey {
         switch micManager.status {
         case .granted:      return "Accès accordé"
         case .undetermined: return "Non déterminé"
@@ -137,9 +137,9 @@ struct PermissionsSection: View {
         }
     }
 
-    private func permissionButton(label: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func permissionButton(label: LocalizedStringKey, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(LocalizedStringKey(label), systemImage: icon)
+            Label(label, systemImage: icon)
         }
     }
 }

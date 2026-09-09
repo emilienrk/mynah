@@ -72,13 +72,29 @@ struct HistoryView: View {
                                     
                                     Spacer()
                                     
-                                    Button {
-                                        copyToClipboard(item.text)
-                                    } label: {
-                                        Image(systemName: "doc.on.doc")
+                                    HStack(spacing: 8) {
+                                        Button {
+                                            copyToClipboard(item.text)
+                                        } label: {
+                                            Image(systemName: "doc.on.doc")
+                                                .font(.system(size: 11))
+                                                .foregroundStyle(.white.opacity(0.5))
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help(String(localized: "Copier le texte"))
+
+                                        Button {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                historyService.deleteItem(id: item.id)
+                                            }
+                                        } label: {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundStyle(.white.opacity(0.4))
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help(String(localized: "Supprimer cette transcription"))
                                     }
-                                    .buttonStyle(.borderless)
-                                    .help(String(localized: "Copier le texte"))
                                 }
                                 
                                 TextField("", text: Binding(

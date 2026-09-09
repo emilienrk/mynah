@@ -43,16 +43,13 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSWindowDeleg
         
         let newWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 560, height: 520),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         
         newWindow.title = String(localized: "Paramètres")
-        newWindow.minSize = NSSize(width: 560, height: 520)
-        if !newWindow.setFrameAutosaveName("WhispeurSettingsWindow") {
-            newWindow.center()
-        }
+        newWindow.center()
         newWindow.isReleasedWhenClosed = false
         newWindow.delegate = self
         newWindow.contentViewController = hostingController

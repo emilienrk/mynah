@@ -56,4 +56,19 @@ struct HistoryServiceTests {
         // Most-recent item should be "item 110"
         #expect(service.items.first?.text == "item 110")
     }
+
+    @Test("Deleting an item removes it and preserves other items")
+    func deleteItemRemovesTarget() {
+        let service = makeService()
+        service.add("first")
+        service.add("second")
+        service.add("third")
+
+        let secondItem = service.items.first { $0.text == "second" }!
+        service.deleteItem(id: secondItem.id)
+
+        #expect(service.items.count == 2)
+        #expect(!service.items.contains { $0.text == "second" })
+        #expect(service.items.map(\.text) == ["third", "first"])
+    }
 }

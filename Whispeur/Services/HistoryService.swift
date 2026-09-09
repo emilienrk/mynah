@@ -50,6 +50,11 @@ final class HistoryService {
         saveHistory()
     }
     
+    func deleteItem(id: UUID) {
+        items.removeAll { $0.id == id }
+        saveHistory()
+    }
+
     func updateItem(id: UUID, newText: String) {
         if let index = items.firstIndex(where: { $0.id == id }) {
             items[index].text = newText

@@ -793,6 +793,17 @@
         }
       }
     },
+    "Supprimer cette transcription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this transcription"
+          }
+        }
+      }
+    },
     "Sur les quatre leviers, deux sont livrés inactifs. Les poser maintenant, c'est autant de gagné dès votre premier essai.": {
       "extractionState": "manual",
       "localizations": {

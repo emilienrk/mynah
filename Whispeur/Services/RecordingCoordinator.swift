@@ -59,6 +59,16 @@ final class RecordingCoordinator {
     }
     var language: WhisperLanguage = .auto
 
+    // MARK: - Long recording duration watchdog
+
+    /// Milestones in seconds to alert the user of ongoing recording (default: 3 min, 10 min, 15 min).
+    var recordingWatchdogMilestones: [TimeInterval] = [180, 600, 900]
+
+    /// Injected notification handler for duration warnings.
+    var notifyRecordingDuration: (Int) async -> Void = { minutes in
+        await NotificationService.shared.sendRecordingDurationWarning(minutes: minutes)
+    }
+
     // MARK: Private
 
     private let logger = Logger(subsystem: "com.whispeur", category: "RecordingCoordinator")
@@ -66,6 +76,8 @@ final class RecordingCoordinator {
     private var pipelineTask: Task<Void, Never>?
     /// Tracks a pending model unload task.
     private var unloadTask: Task<Void, Never>?
+    /// Watchdog task for long recording notifications.
+    private var recordingWatchdogTask: Task<Void, Never>?
 
     // MARK: Init
 
@@ -85,6 +97,12 @@ final class RecordingCoordinator {
         self.mediaPlayback  = mediaPlayback
 
         configureHotkeyCallbacks()
+        NotificationService.shared.onStopRecordingRequested = { [weak self] in
+            guard let self else { return }
+            if self.pipelineState == .recording || self.pipelineState == .loadingModel {
+                self.finishRecording()
+            }
+        }
     }
 
     // MARK: - Hotkey wiring
@@ -161,11 +179,13 @@ final class RecordingCoordinator {
 
         // Model is ready; transition to active recording state.
         pipelineState = .recording
+        startRecordingWatchdog()
         logger.info("Pipeline started — recording…")
     }
 
     /// Phase 2: stop audio, transcribe, paste, unload model.
-    private func finishRecording() {
+    func finishRecording() {
+        stopRecordingWatchdog()
         guard pipelineState == .recording || pipelineState == .loadingModel else { return }
 
         let samples = audioCapture.stopRecording()
@@ -243,6 +263,7 @@ final class RecordingCoordinator {
     }
 
     private func setError(_ message: String) {
+        stopRecordingWatchdog()
         lastError = message
         pipelineState = .error(message)
         logger.error("Pipeline error: \(message)")
@@ -254,6 +275,48 @@ final class RecordingCoordinator {
                 self.pipelineState = .idle
             }
         }
+    }
+
+    private func startRecordingWatchdog() {
+        stopRecordingWatchdog()
+        let startTime = Date()
+        let milestones = recordingWatchdogMilestones
+        recordingWatchdogTask = Task { [weak self] in
+            var nextIndex = 0
+
+            while !Task.isCancelled {
+                let targetSeconds: TimeInterval
+                if nextIndex < milestones.count {
+                    targetSeconds = milestones[nextIndex]
+                } else {
+                    let last = milestones.last ?? 900
+                    let extra = Double(nextIndex - milestones.count + 1)
+                    targetSeconds = last + (extra * 300)
+                }
+
+                let elapsed = Date().timeIntervalSince(startTime)
+                let remaining = targetSeconds - elapsed
+                if remaining > 0 {
+                    do {
+                        try await Task.sleep(for: .seconds(remaining))
+                    } catch {
+                        return
+                    }
+                }
+
+                guard !Task.isCancelled else { return }
+                guard let self, self.pipelineState == .recording else { return }
+
+                let elapsedMinutes = max(1, Int(round(Date().timeIntervalSince(startTime) / 60)))
+                await self.notifyRecordingDuration(elapsedMinutes)
+                nextIndex += 1
+            }
+        }
+    }
+
+    private func stopRecordingWatchdog() {
+        recordingWatchdogTask?.cancel()
+        recordingWatchdogTask = nil
     }
 }
 

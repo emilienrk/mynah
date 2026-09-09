@@ -804,6 +804,28 @@
         }
       }
     },
+    "Enregistrement en cours (%lld min)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording in progress (%lld min)"
+          }
+        }
+      }
+    },
+    "Whispeur enregistre depuis %lld minutes. Pensez à arrêter la dictée si vous avez terminé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whispeur has been recording for %lld minutes. Remember to stop dictation if you are done."
+          }
+        }
+      }
+    },
     "Sur les quatre leviers, deux sont livrés inactifs. Les poser maintenant, c'est autant de gagné dès votre premier essai.": {
       "extractionState": "manual",
       "localizations": {

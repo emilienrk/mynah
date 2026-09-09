@@ -63,6 +63,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let sc = servicesContainer
 
+        // Setup notifications
+        NotificationService.shared.setup()
+
         // Apply stored settings to services.
         applySettings(sc)
 

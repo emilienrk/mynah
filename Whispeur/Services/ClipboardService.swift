@@ -208,29 +208,8 @@ final class ClipboardService {
 
 // MARK: - Copied notification
 
-/// Tells the user the text is waiting on the clipboard. A free function so tests
-/// can swap it out: UNUserNotificationCenter traps outside a real app bundle.
+/// Tells the user the text is waiting on the clipboard.
 @MainActor
 func sendCopiedNotification() async {
-    let center = UNUserNotificationCenter.current()
-
-    // Request notification authorization if not yet determined.
-    let settings = await center.notificationSettings()
-    if settings.authorizationStatus == .notDetermined {
-        _ = try? await center.requestAuthorization(options: [.alert, .sound])
-    }
-    guard settings.authorizationStatus == .authorized ||
-          settings.authorizationStatus == .notDetermined else { return }
-
-    let content = UNMutableNotificationContent()
-    content.title = String(localized: "Texte copié dans le presse-papier")
-    content.body  = String(localized: "Aucun champ de texte actif détecté. Collez avec ⌘V.")
-    content.sound = .default
-
-    let request = UNNotificationRequest(
-        identifier: "com.whispeur.copied-\(UUID().uuidString)",
-        content: content,
-        trigger: nil // deliver immediately
-    )
-    try? await center.add(request)
+    await NotificationService.shared.sendCopiedNotification()
 }

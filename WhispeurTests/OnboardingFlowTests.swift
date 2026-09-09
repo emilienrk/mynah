@@ -26,6 +26,12 @@ struct OnboardingFlowTests {
         #expect(flow.canAdvance == true)
     }
 
+    @Test("Flow can resume from a specified initial step")
+    func resumesFromInitialStep() {
+        let flow = OnboardingFlow(requirements: FakeRequirements(), initialStep: .accessibility)
+        #expect(flow.step == .accessibility)
+    }
+
     @Test("Microphone blocks until it is granted")
     func microphoneIsBlocking() {
         let requirements = FakeRequirements()

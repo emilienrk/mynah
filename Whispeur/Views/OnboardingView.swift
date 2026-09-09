@@ -19,12 +19,14 @@ struct OnboardingView: View {
     init(services: ServicesContainer, onFinish: @escaping () -> Void) {
         self.services = services
         self.onFinish = onFinish
+        let initialStep = OnboardingStep(rawValue: services.settings.onboardingStepRaw) ?? .welcome
         _flow = State(
             initialValue: OnboardingFlow(
                 requirements: SystemOnboardingRequirements(
                     micManager: services.micPermManager,
                     settings: services.settings
-                )
+                ),
+                initialStep: initialStep
             )
         )
     }
@@ -33,16 +35,26 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             page
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(28)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
 
             Divider().opacity(0.12)
 
             footer
                 .padding(16)
         }
-        .frame(width: 520, height: 460)
+        .frame(width: 520, height: 520)
         .preferredColorScheme(.dark)
-        .onAppear { isAXTrusted = AXIsProcessTrusted() }
+        .onAppear {
+            checkAccessibility()
+            services.settings.onboardingStepRaw = flow.step.rawValue
+        }
+        .onChange(of: flow.step) {
+            services.settings.onboardingStepRaw = flow.step.rawValue
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            checkAccessibility()
+        }
     }
 
     // MARK: - Pages
@@ -101,23 +113,47 @@ struct OnboardingView: View {
     private var accessibilityPage: some View {
         pageLayout(
             icon: "hand.tap.fill",
-            title: "Collage automatique",
-            subtitle: "Avec l'autorisation d'Accessibilité, Whispeur colle le texte directement dans l'application active. Sans elle, le texte est copié dans le presse-papier — vous collez avec ⌘V."
+            title: "Touche dictée & accessibilité",
+            subtitle: "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter la touche 🎤 (F5) et coller le texte directement dans vos applications."
         ) {
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 if isAXTrusted {
                     statusLine(granted: true, text: "Accessibilité autorisée")
+
+                    Text("L'écoute clavier et le collage direct sont opérationnels.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
                 } else {
                     Button("Ouvrir les Réglages Système") {
                         openAccessibilitySettings()
                     }
                     .buttonStyle(.borderedProminent)
 
-                    Button("Vérifier à nouveau") {
-                        isAXTrusted = AXIsProcessTrusted()
+                    onboardingCard {
+                        VStack(spacing: 8) {
+                            Text("Une fois l'autorisation activée dans les Réglages Système, relancez Whispeur pour initialiser la capture clavier.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            HStack(spacing: 12) {
+                                Button {
+                                    relaunchApp()
+                                } label: {
+                                    Label("Relancer Whispeur", systemImage: "arrow.clockwise")
+                                }
+                                .buttonStyle(.bordered)
+
+                                Button("Vérifier à nouveau") {
+                                    checkAccessibility()
+                                }
+                                .buttonStyle(.borderless)
+                                .foregroundStyle(.white.opacity(0.6))
+                            }
+                        }
                     }
-                    .buttonStyle(.borderless)
-                    .foregroundStyle(.white.opacity(0.6))
                 }
             }
         }
@@ -132,6 +168,12 @@ struct OnboardingView: View {
             VStack(spacing: 12) {
                 modelRow(WhisperModelDescriptor.onboardingDefault, recommended: true)
                 modelRow(WhisperModelDescriptor.onboardingLight, recommended: false)
+            }
+            .onAppear {
+                autoSelectInstalledModelIfNeeded()
+            }
+            .onChange(of: ModelManager.shared.installedFilenames) {
+                autoSelectInstalledModelIfNeeded()
             }
         }
     }
@@ -312,26 +354,92 @@ struct OnboardingView: View {
     private var hotkeyPage: some View {
         pageLayout(
             icon: "keyboard",
-            title: "Essayez",
-            subtitle: "Maintenez la touche 🎤 de votre clavier, dites une phrase, puis relâchez. Le texte apparaît ci-dessous."
+            title: "Essayez la dictée",
+            subtitle: "Maintenez votre touche de dictée ou utilisez le bouton micro pour faire un essai."
         ) {
             VStack(spacing: 10) {
-                Text(services.coordinator.lastTranscription.isEmpty
-                     ? "En attente de votre première dictée…"
-                     : services.coordinator.lastTranscription)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(services.coordinator.lastTranscription.isEmpty ? 0.3 : 0.85))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity, minHeight: 60)
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.white.opacity(0.05))
-                    )
+                // Transcription / recording status box
+                VStack(spacing: 6) {
+                    if isCoordinatorRecording {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                            Text("Enregistrement en cours… Parlez puis relâchez ou cliquez sur Arrêter.")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.red.opacity(0.9))
+                        }
+                    } else if isCoordinatorTranscribing {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text("Transcription en cours…")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    } else {
+                        Text(services.coordinator.lastTranscription.isEmpty
+                             ? "En attente de votre première dictée…"
+                             : services.coordinator.lastTranscription)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.white.opacity(services.coordinator.lastTranscription.isEmpty ? 0.3 : 0.9))
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                )
+
+                // Interactive test micro button
+                Button {
+                    toggleTestRecording()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: isCoordinatorRecording ? "stop.fill" : "mic.fill")
+                            .foregroundStyle(isCoordinatorRecording ? .red : Color.accentColor)
+                        Text(isCoordinatorRecording ? "Arrêter l'enregistrement" : "Tester avec le micro")
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                }
+                .buttonStyle(.bordered)
+
+                // Keybind changer
+                onboardingCard {
+                    HStack(spacing: 10) {
+                        Image(systemName: "command")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.5))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Touche active")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.85))
+                            Text("Par défaut : 🎤 (F5). Cliquez pour changer si besoin.")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+
+                        Spacer()
+
+                        HotKeyRecorder(
+                            hotKey: Binding(
+                                get: { services.settings.currentHotKey },
+                                set: { newKey in
+                                    services.settings.hotKeyCode = newKey.keyCode
+                                    services.settings.hotKeyModifiers = newKey.modifiers
+                                    services.hotkeyManager.updateHotKey(newKey)
+                                }
+                            ),
+                            hotkeyManager: services.hotkeyManager
+                        )
+                    }
+                }
 
                 Text("La dictée d'Apple utilise la même touche et joue ses propres bips. Désactivez-la pour laisser la touche à Whispeur.")
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.white.opacity(0.35))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 360)
@@ -366,7 +474,7 @@ struct OnboardingView: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(spacing: 14) {
-            Spacer()
+            Spacer(minLength: 0)
 
             if let icon {
                 Image(systemName: icon)
@@ -388,7 +496,7 @@ struct OnboardingView: View {
             content()
                 .padding(.top, 4)
 
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
 
@@ -413,46 +521,83 @@ struct OnboardingView: View {
 
     private func modelRow(_ model: WhisperModelDescriptor, recommended: Bool) -> some View {
         let state = ModelManager.shared.state(for: model)
+        let isDownloaded = state == .done
+        let isSelected = isDownloaded && services.settings.selectedModelFilename == model.filename
 
-        return onboardingCard {
-            HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(model.name)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.85))
+                    if recommended {
+                        Text("recommandé")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                }
+                Text(model.sizeInfo)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.35))
+            }
+
+            Spacer()
+
+            switch state {
+            case .done:
+                if isSelected {
                     HStack(spacing: 6) {
-                        Text(model.name)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.85))
-                        if recommended {
-                            Text("recommandé")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.45))
-                        }
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.green)
+                        Text("Actif")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.green)
                     }
-                    Text(model.sizeInfo)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
-                }
-
-                Spacer()
-
-                switch state {
-                case .done:
-                    Button("Utiliser") { select(model) }
-                        .buttonStyle(.borderedProminent)
-                case .downloading(let progress):
-                    ProgressView(value: progress)
-                        .frame(width: 90)
-                case .installing:
-                    ProgressView().controlSize(.small)
-                case .failed(let message):
-                    Text(message)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.red.opacity(0.8))
-                case .idle:
-                    Button("Télécharger") {
-                        ModelManager.shared.download(model)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.12))
+                    )
+                } else {
+                    Button("Utiliser") {
+                        select(model)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                 }
+            case .downloading(let progress):
+                ProgressView(value: progress)
+                    .frame(width: 90)
+            case .installing:
+                ProgressView().controlSize(.small)
+            case .failed(let message):
+                Text(message)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.red.opacity(0.8))
+            case .idle:
+                Button("Télécharger") {
+                    ModelManager.shared.download(model)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(
+                            isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isDownloaded && !isSelected {
+                select(model)
             }
         }
     }
@@ -460,11 +605,10 @@ struct OnboardingView: View {
     // MARK: - Footer
 
     private var footer: some View {
-        HStack {
+        HStack(alignment: .center) {
             if flow.step != .welcome && flow.step != .done {
                 Button("Retour") { flow.back() }
-                    .buttonStyle(.borderless)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .buttonStyle(.bordered)
             }
 
             Spacer()
@@ -484,6 +628,15 @@ struct OnboardingView: View {
 
     // MARK: - Actions
 
+    private func autoSelectInstalledModelIfNeeded() {
+        guard services.settings.selectedModelDescriptor?.isDownloaded != true else { return }
+        if ModelManager.shared.isInstalled(WhisperModelDescriptor.onboardingDefault) {
+            select(WhisperModelDescriptor.onboardingDefault)
+        } else if ModelManager.shared.isInstalled(WhisperModelDescriptor.onboardingLight) {
+            select(WhisperModelDescriptor.onboardingLight)
+        }
+    }
+
     /// Same additive behaviour as the Settings field: combining a vocabulary preset
     /// with a style one is the intended use, so picking a second never wipes the first.
     private func append(_ preset: PromptPreset) {
@@ -496,8 +649,42 @@ struct OnboardingView: View {
         services.coordinator.modelURL = model.localURL
     }
 
-    /// Apple's dictation is bound to the same 🎤 key and answers it with its own
-    /// start/stop chimes — nothing Whispeur can silence from its side.
+    private func checkAccessibility() {
+        let trusted = AXIsProcessTrusted()
+        isAXTrusted = trusted
+        if trusted && !services.hotkeyManager.isListening {
+            services.hotkeyManager.startListening()
+        }
+    }
+
+    private func relaunchApp() {
+        services.settings.onboardingStepRaw = flow.step.rawValue
+        let url = Bundle.main.bundleURL
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+            DispatchQueue.main.async {
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    private var isCoordinatorRecording: Bool {
+        services.coordinator.pipelineState == .recording || services.coordinator.pipelineState == .loadingModel
+    }
+
+    private var isCoordinatorTranscribing: Bool {
+        services.coordinator.pipelineState == .transcribing || services.coordinator.pipelineState == .pasting
+    }
+
+    private func toggleTestRecording() {
+        if isCoordinatorRecording {
+            services.coordinator.onHotkeyUp()
+        } else {
+            services.coordinator.onHotkeyDown()
+        }
+    }
+
     private func openDictationSettings() {
         guard let url = URL(
             string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"

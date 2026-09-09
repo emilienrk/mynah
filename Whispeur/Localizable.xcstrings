@@ -1980,6 +1980,138 @@
           }
         }
       }
+    },
+    "Touche dictée & accessibilité": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation key & accessibility"
+          }
+        }
+      }
+    },
+    "Whispeur a besoin de l'autorisation d'Accessibilité pour écouter la touche 🎤 (F5) et coller le texte directement dans vos applications.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whispeur needs Accessibility permission to listen for the 🎤 (F5) key and paste text directly into your apps."
+          }
+        }
+      }
+    },
+    "L'écoute clavier et le collage direct sont opérationnels.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard listening and auto-paste are ready."
+          }
+        }
+      }
+    },
+    "Une fois l'autorisation activée dans les Réglages Système, relancez Whispeur pour initialiser la capture clavier.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once permission is enabled in System Settings, relaunch Whispeur to initialize keyboard capture."
+          }
+        }
+      }
+    },
+    "Relancer Whispeur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relaunch Whispeur"
+          }
+        }
+      }
+    },
+    "Essayez la dictée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try dictation"
+          }
+        }
+      }
+    },
+    "Maintenez votre touche de dictée ou utilisez le bouton micro pour faire un essai.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold your dictation key or use the microphone button to try it out."
+          }
+        }
+      }
+    },
+    "Enregistrement en cours… Parlez puis relâchez ou cliquez sur Arrêter.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording… Speak, then release or click Stop."
+          }
+        }
+      }
+    },
+    "Transcription en cours…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing…"
+          }
+        }
+      }
+    },
+    "Tester avec le micro": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test with microphone"
+          }
+        }
+      }
+    },
+    "Arrêter l'enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop recording"
+          }
+        }
+      }
+    },
+    "Par défaut : 🎤 (F5). Cliquez pour changer si besoin.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default: 🎤 (F5). Click to change if needed."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

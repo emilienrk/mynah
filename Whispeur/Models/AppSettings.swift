@@ -53,6 +53,7 @@ final class AppSettings {
         _initialPrompt         = ud.string(forKey: "initialPrompt") ?? ""
         _vadEnabled            = (ud.object(forKey: "vadEnabled") as? Bool) ?? false
         _hasCompletedOnboarding = (ud.object(forKey: "hasCompletedOnboarding") as? Bool) ?? false
+        _onboardingStepRaw     = ud.integer(forKey: "onboardingStep")
         if let data = ud.data(forKey: "favoritedModels"),
            let arr  = try? JSONDecoder().decode([String].self, from: data) {
             favoritedModelFilenames = arr
@@ -186,7 +187,22 @@ final class AppSettings {
     /// False until the first-launch setup has been walked through or dismissed.
     var hasCompletedOnboarding: Bool {
         get { _hasCompletedOnboarding }
-        set { _hasCompletedOnboarding = newValue }
+        set {
+            _hasCompletedOnboarding = newValue
+            if newValue {
+                _onboardingStepRaw = 0
+                UserDefaults.standard.removeObject(forKey: "onboardingStep")
+            }
+        }
+    }
+
+    private var _onboardingStepRaw: Int {
+        didSet { UserDefaults.standard.set(_onboardingStepRaw, forKey: "onboardingStep") }
+    }
+    /// Saved step index of the onboarding wizard across launches.
+    var onboardingStepRaw: Int {
+        get { _onboardingStepRaw }
+        set { _onboardingStepRaw = newValue }
     }
 
     // MARK: - Engine (Whisper params)

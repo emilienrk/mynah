@@ -46,8 +46,11 @@ final class OnboardingFlow {
 
     private let requirements: any OnboardingRequirements
 
-    init(requirements: any OnboardingRequirements) {
+    init(requirements: any OnboardingRequirements, initialStep: OnboardingStep? = nil) {
         self.requirements = requirements
+        if let initialStep {
+            self.step = initialStep
+        }
     }
 
     /// Microphone and model are blocking: without them Whispeur cannot dictate

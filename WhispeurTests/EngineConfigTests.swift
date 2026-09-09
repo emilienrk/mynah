@@ -143,4 +143,23 @@ struct EngineConfigTests {
         #expect(s.hasCompletedOnboarding == false)
         #expect(UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") == false)
     }
+
+    @Test("onboardingStepRaw round-trips through UserDefaults and resets on completion")
+    func onboardingStepRawPersists() {
+        let s = AppSettings.shared
+        let savedStep = s.onboardingStepRaw
+        let savedCompleted = s.hasCompletedOnboarding
+        defer {
+            s.onboardingStepRaw = savedStep
+            s.hasCompletedOnboarding = savedCompleted
+        }
+
+        s.onboardingStepRaw = 2
+        #expect(s.onboardingStepRaw == 2)
+        #expect(UserDefaults.standard.integer(forKey: "onboardingStep") == 2)
+
+        s.hasCompletedOnboarding = true
+        #expect(s.onboardingStepRaw == 0)
+        #expect(UserDefaults.standard.object(forKey: "onboardingStep") == nil)
+    }
 }

@@ -13,6 +13,11 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate {
     }
 
     func show(services: ServicesContainer, tab: SettingsTab = .general) {
+        guard services.settings.hasCompletedOnboarding else {
+            OnboardingWindowController.shared.show(services: services)
+            return
+        }
+
         tabSelection.currentTab = tab
 
         if let existingWindow = window {

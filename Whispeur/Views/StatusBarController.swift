@@ -68,6 +68,29 @@ final class StatusBarController: NSObject {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
+        guard settings.hasCompletedOnboarding else {
+            let setupItem = NSMenuItem(
+                title: String(localized: "Continuer la configuration…"),
+                action: #selector(openOnboarding),
+                keyEquivalent: ""
+            )
+            setupItem.target = self
+            setupItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
+            menu.addItem(setupItem)
+
+            menu.addItem(.separator())
+
+            let quitItem = NSMenuItem(
+                title: String(localized: "Quitter Whispeur"),
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
+            )
+            quitItem.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: nil)
+            menu.addItem(quitItem)
+
+            return menu
+        }
+
         // ── Status / trigger ─────────────────────────────────────────────
         let state = coordinator.pipelineState
 
@@ -268,6 +291,10 @@ final class StatusBarController: NSObject {
     // MARK: - Actions
 
     @objc private func triggerRecording() {
+        guard settings.hasCompletedOnboarding else {
+            openOnboarding()
+            return
+        }
         logger.debug("triggerRecording() — state: \(String(describing: self.coordinator.pipelineState))")
         switch coordinator.pipelineState {
         case .idle:      coordinator.onHotkeyDown()
@@ -277,6 +304,10 @@ final class StatusBarController: NSObject {
     }
 
     @objc private func selectFavoriteModel(_ sender: NSMenuItem) {
+        guard settings.hasCompletedOnboarding else {
+            openOnboarding()
+            return
+        }
         guard let filename = sender.representedObject as? String,
               let descriptor = WhisperModelDescriptor.catalog.first(where: { $0.filename == filename })
         else { return }
@@ -289,12 +320,23 @@ final class StatusBarController: NSObject {
         UpdaterService.shared.checkForUpdates()
     }
 
+    @objc private func openOnboarding() {
+        OnboardingWindowController.shared.show(services: servicesContainer)
+    }
+
     @objc func openSettings() {
+        guard settings.hasCompletedOnboarding else {
+            openOnboarding()
+            return
+        }
         SettingsWindowController.shared.show(services: servicesContainer)
     }
 
-
     @objc func openHistory() {
+        guard settings.hasCompletedOnboarding else {
+            openOnboarding()
+            return
+        }
         SettingsWindowController.shared.show(services: servicesContainer, tab: .history)
     }
 }

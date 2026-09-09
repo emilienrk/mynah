@@ -213,11 +213,15 @@ final class RecordingCoordinator {
 
         FeedbackSound.finished.play()
 
-        let result = await clipboardService.copyAndPaste(text)
-        logger.info("Paste result: \(String(describing: result))")
-        
-        // Save to history
-        historyService.add(text)
+        if AppSettings.shared.hasCompletedOnboarding {
+            let result = await clipboardService.copyAndPaste(text)
+            logger.info("Paste result: \(String(describing: result))")
+            
+            // Save to history
+            historyService.add(text)
+        } else {
+            logger.info("Skipping paste and history during onboarding test")
+        }
 
         pipelineState = .idle
     }

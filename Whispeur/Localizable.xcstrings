@@ -1398,6 +1398,17 @@
         }
       }
     },
+    "Continuer la configuration…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue setup…"
+          }
+        }
+      }
+    },
     "Terminer": {
       "extractionState": "manual",
       "localizations": {

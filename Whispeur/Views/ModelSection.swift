@@ -195,13 +195,25 @@ private struct FamilyGroup<Row: View>: View {
         } else if isBusy {
             ProgressView().scaleEffect(0.5).frame(width: 16, height: 16)
         } else if installedCount > 0 {
-            Text(installedCount > 1 ? "\(installedCount) installés" : "1 installé")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white.opacity(0.4))
+            if installedCount > 1 {
+                Text("\(installedCount) installés")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
+            } else {
+                Text("1 installé")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
         } else {
-            Text(family.variants.count > 1 ? "\(family.variants.count) variantes" : "1 variante")
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.25))
+            if family.variants.count > 1 {
+                Text("\(family.variants.count) variantes")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.25))
+            } else {
+                Text("1 variante")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.25))
+            }
         }
     }
 }

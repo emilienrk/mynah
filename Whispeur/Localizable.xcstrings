@@ -2321,6 +2321,50 @@
           }
         }
       }
+    },
+    "1 installé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 installed"
+          }
+        }
+      }
+    },
+    "%lld installés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld installed"
+          }
+        }
+      }
+    },
+    "1 variante": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 variant"
+          }
+        }
+      }
+    },
+    "%lld variantes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld variants"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

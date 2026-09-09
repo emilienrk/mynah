@@ -277,7 +277,7 @@ final class RecordingCoordinator {
         }
     }
 
-    private func startRecordingWatchdog() {
+    func startRecordingWatchdog() {
         stopRecordingWatchdog()
         let startTime = Date()
         let milestones = recordingWatchdogMilestones
@@ -314,9 +314,13 @@ final class RecordingCoordinator {
         }
     }
 
-    private func stopRecordingWatchdog() {
+    func stopRecordingWatchdog() {
         recordingWatchdogTask?.cancel()
         recordingWatchdogTask = nil
+    }
+
+    func setPipelineStateForTesting(_ state: PipelineState) {
+        self.pipelineState = state
     }
 }
 

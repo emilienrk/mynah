@@ -9,12 +9,18 @@ import SwiftUI
 import AppKit
 
 @MainActor
-final class OnboardingWindowController: NSObject {
+final class OnboardingWindowController: NSObject, NSWindowDelegate {
     static let shared = OnboardingWindowController()
 
     private var window: NSWindow?
 
+    var isVisible: Bool {
+        window?.isVisible == true
+    }
+
     func show(services: ServicesContainer) {
+        NSApp.setActivationPolicy(.regular)
+
         if let existing = window {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -35,6 +41,7 @@ final class OnboardingWindowController: NSObject {
         newWindow.title = String(localized: "Configuration de Whispeur")
         newWindow.center()
         newWindow.isReleasedWhenClosed = false
+        newWindow.delegate = self
         newWindow.contentViewController = NSHostingController(rootView: view)
 
         window = newWindow
@@ -42,8 +49,20 @@ final class OnboardingWindowController: NSObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    // MARK: - NSWindowDelegate
+
+    func windowWillClose(_ notification: Notification) {
+        window = nil
+        if !SettingsWindowController.shared.isVisible {
+            NSApp.setActivationPolicy(.accessory)
+        }
+    }
+
     private func close() {
         window?.close()
         window = nil
+        if !SettingsWindowController.shared.isVisible {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }

@@ -54,8 +54,8 @@ struct NativeSettingsView: View {
                 }
             }
         }
-        // Force the window to stay at a consistent size across tabs
-        .frame(width: 560, height: 520)
+        // Minimum size matching default dimensions; allows expanding when resized
+        .frame(minWidth: 560, maxWidth: .infinity, minHeight: 520, maxHeight: .infinity)
         .preferredColorScheme(.dark)
     }
 }

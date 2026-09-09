@@ -123,8 +123,8 @@ actor WhisperService {
             ? WHISPER_SAMPLING_BEAM_SEARCH
             : WHISPER_SAMPLING_GREEDY
 
-        // Les chaînes C doivent survivre à whisper_full : strdup + defer free
-        // évite l'imbrication de withCString pour plusieurs chaînes optionnelles.
+        // C strings must outlive whisper_full: strdup + defer free
+        // avoids nested withCString blocks for multiple optional strings.
         let cLanguage: UnsafeMutablePointer<CChar>? = language.whisperCode.flatMap { strdup($0) }
         let cPrompt: UnsafeMutablePointer<CChar>? = config.initialPrompt.isEmpty ? nil : strdup(config.initialPrompt)
         let cVadPath: UnsafeMutablePointer<CChar>? = config.vadModelPath.flatMap { strdup($0) }
@@ -187,7 +187,7 @@ actor WhisperService {
         params.carry_initial_prompt = cPrompt != nil
 
         if config.vadEnabled, let cVadPath {
-            // vadModelPath est résolu côté MainActor : non-nil ⟹ le fichier existe.
+            // vadModelPath is resolved on MainActor: non-nil guarantees file exists.
             params.vad = true
             params.vad_model_path = cVadPath
             params.vad_params = whisper_vad_default_params()

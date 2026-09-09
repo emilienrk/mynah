@@ -267,7 +267,7 @@ struct OnboardingView: View {
     /// describing itself — and the VAD model downloads while they read.
     ///
     /// Only the two settings whose default is inert are surfaced. Everything else
-    /// in Réglages › Moteur ships with a value that suits dictation as-is, and a
+    /// in Settings › Engine ships with a value that suits dictation as-is, and a
     /// setup wizard is the wrong place to ask a question the user cannot yet judge.
     private var enginePage: some View {
         pageLayout(

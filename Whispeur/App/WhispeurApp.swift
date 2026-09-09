@@ -94,7 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Start global hotkey listener.
         sc.hotkeyManager.startListening()
 
-        // Démarre Sparkle (checks automatiques + manuels).
+        // Start Sparkle (automatic + manual checks).
         UpdaterService.shared.start()
     }
 

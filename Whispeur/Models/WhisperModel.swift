@@ -176,8 +176,8 @@ struct WhisperModelDescriptor: Identifiable, Hashable, Sendable {
         catalog.first { $0.name == "base-q5_1" }!
     }
 
-    /// Modèle Silero VAD requis par le filtre VAD de whisper.cpp.
-    /// Hors catalogue : téléchargé automatiquement quand le VAD est activé.
+    /// Silero VAD model required by the whisper.cpp VAD filter.
+    /// Out of catalog: downloaded automatically when VAD is enabled.
     static let vadSilero = WhisperModelDescriptor(
         name: "silero-vad-v5.1.2",
         sizeInfo: "~1 MiB",

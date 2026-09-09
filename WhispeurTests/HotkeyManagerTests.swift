@@ -1,8 +1,8 @@
 // HotkeyManagerTests.swift
 // WhispeurTests
 //
-// Tests de la logique d'interception du CGEventTap (handleRawEvent)
-// via des CGEvents synthétiques — aucun tap réel n'est installé.
+// Tests for CGEventTap interception logic (handleRawEvent)
+// using synthetic CGEvents — no real tap is installed.
 
 import Testing
 import AppKit
@@ -27,9 +27,9 @@ struct HotkeyManagerTests {
         }
     }
 
-    // MARK: - Bug 1 : espace seule cassée quand ⌥Espace est bindé
+    // MARK: - Bug 1: Plain space broken when ⌥Space is bound
 
-    @Test("Espace seule traverse le tap quand ⌥Espace est bindé (pas d'enregistrement en cours)")
+    @Test("Plain space passes through tap when ⌥Space is bound (no active recording)")
     func plainSpacePassesThroughWhenComboBound() {
         let manager = HotkeyManager()
         manager.updateHotKey(HotKey(keyCode: 49, modifiers: Int(CGEventFlags.maskAlternate.rawValue)))
@@ -37,39 +37,39 @@ struct HotkeyManagerTests {
         let down = manager.handleRawEvent(type: .keyDown, event: keyEvent(49, down: true))
         let up   = manager.handleRawEvent(type: .keyUp,   event: keyEvent(49, down: false))
 
-        #expect(down != nil, "keyDown espace seule ne doit pas être consommé")
-        #expect(up != nil, "keyUp espace seule ne doit pas être consommé")
+        #expect(down != nil, "keyDown for plain space must not be consumed")
+        #expect(up != nil, "keyUp for plain space must not be consumed")
     }
 
-    @Test("Le keyUp anti-blocage n'est avalé que si un appui du raccourci est engagé")
+    @Test("Unstick keyUp is only swallowed if a hotkey press was engaged")
     func unstickReleaseOnlyWhenEngaged() {
         let manager = HotkeyManager()
         manager.updateHotKey(HotKey(keyCode: 49, modifiers: Int(CGEventFlags.maskAlternate.rawValue)))
 
-        // ⌥Espace enfoncé → consommé, appui engagé.
+        // ⌥Space pressed → consumed, press engaged.
         let down = manager.handleRawEvent(type: .keyDown, event: keyEvent(49, down: true, flags: .maskAlternate))
         #expect(down == nil)
 
-        // ⌥ relâchée avant Espace : le keyUp d'Espace (sans modif) doit être
-        // consommé pour terminer l'enregistrement (anti-blocage).
+        // ⌥ released before Space: the keyUp for Space (no mods) must be
+        // consumed to end the recording (unstick safeguard).
         let unstick = manager.handleRawEvent(type: .keyUp, event: keyEvent(49, down: false))
         #expect(unstick == nil)
 
-        // Appui suivant d'Espace seule : plus rien d'engagé → doit traverser.
+        // Subsequent plain Space press: nothing engaged → must pass through.
         let later = manager.handleRawEvent(type: .keyUp, event: keyEvent(49, down: false))
         #expect(later != nil)
     }
 
-    // MARK: - Bug 2/3 : touche dictée (keycode 176)
+    // MARK: - Bug 2/3: Dictation key (keycode 176)
 
-    @Test("Le raccourci par défaut est la touche dictée (176), pas Mission Control (160)")
+    @Test("Default hotkey is dictation key (176), not Mission Control (160)")
     func defaultHotKeyIsDictationKey() {
         #expect(HotKey.defaultHotKey.keyCode == 176)
         #expect(HotKey.defaultHotKey.modifiers == 0)
         #expect(HotKey.defaultHotKey.displayString.contains("Dictée"))
     }
 
-    @Test("La touche dictée bindée est consommée (la dictée Apple ne doit pas la recevoir)")
+    @Test("Bound dictation key is consumed (Apple dictation must not receive it)")
     func dictationKeyConsumedWhenBound() {
         let manager = HotkeyManager()
         manager.updateHotKey(.defaultHotKey)
@@ -77,13 +77,13 @@ struct HotkeyManagerTests {
         let down = manager.handleRawEvent(type: .keyDown, event: keyEvent(176, down: true))
         let up   = manager.handleRawEvent(type: .keyUp,   event: keyEvent(176, down: false))
 
-        #expect(down == nil, "keyDown dictée doit être consommé")
-        #expect(up == nil, "keyUp dictée doit être consommé")
+        #expect(down == nil, "keyDown for dictation key must be consumed")
+        #expect(up == nil, "keyUp for dictation key must be consumed")
     }
 
-    // MARK: - Répétition automatique en mode Basculer
+    // MARK: - Autorepeat in toggle mode
 
-    @Test("Les répétitions auto du raccourci ne re-déclenchent pas (mode Basculer)")
+    @Test("Autorepeated hotkey events do not retrigger (toggle mode)")
     func autorepeatDoesNotRetrigger() async {
         let manager = HotkeyManager()
         manager.updateHotKey(HotKey(keyCode: 49, modifiers: 0))
@@ -102,14 +102,14 @@ struct HotkeyManagerTests {
 
         await drainMainQueue()
 
-        #expect(r1 == nil && r2 == nil, "les répétitions du raccourci restent consommées")
-        #expect(counter.downs == 1, "un seul déclenchement malgré les répétitions")
-        #expect(counter.ups == 0, "le toggle ne doit pas s'arrêter sur une répétition")
+        #expect(r1 == nil && r2 == nil, "hotkey repeats remain consumed")
+        #expect(counter.downs == 1, "single trigger despite repeat events")
+        #expect(counter.ups == 0, "toggle must not stop on a repeat event")
     }
 
-    // MARK: - Capture d'un nouveau raccourci via le tap
+    // MARK: - Hotkey capture via event tap
 
-    @Test("La capture attrape une combinaison touche+modificateurs et consomme l'événement")
+    @Test("Capture grabs key+modifiers combination and consumes event")
     func captureGrabsComboAndConsumes() async {
         let manager = HotkeyManager()
         let box = CapturedBox()
@@ -119,12 +119,12 @@ struct HotkeyManagerTests {
 
         await drainMainQueue()
 
-        #expect(result == nil, "l'événement capturé doit être consommé")
+        #expect(result == nil, "captured event must be consumed")
         #expect(box.called)
         #expect(box.value == HotKey(keyCode: 49, modifiers: Int(CGEventFlags.maskAlternate.rawValue)))
     }
 
-    @Test("Échap annule la capture")
+    @Test("Escape cancels capture")
     func escapeCancelsCapture() async {
         let manager = HotkeyManager()
         let box = CapturedBox()
@@ -139,14 +139,14 @@ struct HotkeyManagerTests {
         #expect(box.value == nil)
     }
 
-    @Test("Un modificateur seul se capture à son relâchement")
+    @Test("Standalone modifier is captured on release")
     func captureLoneModifierOnRelease() async {
         let manager = HotkeyManager()
         let box = CapturedBox()
 
         manager.beginHotKeyCapture { box.value = $0; box.called = true }
 
-        // fn (63) enfoncée puis relâchée.
+        // fn (63) pressed then released.
         let fnDown = keyEvent(63, down: true)
         fnDown.flags = .maskSecondaryFn
         let downResult = manager.handleRawEvent(type: .flagsChanged, event: fnDown)
@@ -163,7 +163,7 @@ struct HotkeyManagerTests {
         #expect(box.value == HotKey(keyCode: 63, modifiers: 0))
     }
 
-    @Test("Pendant la capture, l'ancien raccourci ne déclenche pas d'enregistrement")
+    @Test("Previous hotkey does not fire recording during capture")
     func oldHotkeyDoesNotFireDuringCapture() async {
         let manager = HotkeyManager()
         manager.updateHotKey(HotKey(keyCode: 49, modifiers: 0))
@@ -177,14 +177,14 @@ struct HotkeyManagerTests {
         _ = manager.handleRawEvent(type: .keyDown, event: keyEvent(49, down: true))
         await drainMainQueue()
 
-        #expect(counter.downs == 0, "la touche doit être capturée, pas déclenchée")
+        #expect(counter.downs == 0, "key must be captured, not triggered")
         #expect(box.value == HotKey(keyCode: 49, modifiers: 0))
     }
 
-    /// Sans Accessibilité, le tap ne peut pas s'installer : il doit repasser en
-    /// attente active, sinon le raccourci reste mort jusqu'au relancement.
+    /// Without Accessibility permission, the tap cannot be installed: it must
+    /// fall back to polling, otherwise the hotkey remains inactive until relaunch.
     @MainActor
-    @Test("startListening sans Accessibilité bascule sur le polling",
+    @Test("startListening without Accessibility falls back to polling",
           .enabled(if: !AXIsProcessTrusted()))
     func startListeningDefersToPolling() {
         let manager = HotkeyManager()

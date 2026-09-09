@@ -1,8 +1,8 @@
 // UpdaterService.swift
 // Whispeur
 //
-// Wrapper autour de Sparkle : démarre l'updater au lancement, expose la
-// vérification manuelle et l'état de la dernière vérification pour l'UI.
+// Sparkle wrapper: starts updater on launch, exposes manual check
+// and check status to the UI.
 
 import Foundation
 import Combine
@@ -50,7 +50,7 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate {
             }
     }
 
-    /// Force l'instanciation (démarre les checks automatiques planifiés).
+    /// Forces initialization to begin scheduled update checks.
     func start() {}
 
     func checkForUpdates() {

@@ -43,7 +43,7 @@ struct HotKey: Equatable, Sendable, Codable {
     static let defaultHotKey = HotKey(keyCode: 176, modifiers: 0)
 
     private static func keyCodeToString(_ keyCode: Int) -> String? {
-        // Touches spéciales et de fonction
+        // Special and function keys
         let specialMap: [Int: String] = [
             36: "↩", 48: "⇥", 49: "Espace", 51: "⌫", 52: "Enter", 53: "Esc", 
             54: "⌘", 55: "⌘", 56: "⇧", 57: "⇪", 58: "⌥", 59: "⌃", 60: "⇧", 
@@ -59,7 +59,7 @@ struct HotKey: Equatable, Sendable, Codable {
             return special
         }
         
-        // Résolution dynamique pour les touches alphanumériques selon le layout clavier (QWERTY/AZERTY...)
+        // Dynamic resolution for alphanumeric keys based on keyboard layout (QWERTY/AZERTY...)
         let source = TISCopyCurrentKeyboardInputSource().takeRetainedValue()
         guard let layoutDataPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else {
             return nil
@@ -113,12 +113,11 @@ private struct TapSharedState {
     var hotKey: HotKey       = .defaultHotKey
     var mode: HotKeyMode     = .pushToTalk
     var isToggledOn: Bool    = false
-    /// True entre le keyDown du raccourci et son relâchement — permet de ne
-    /// consommer le keyUp "anti-blocage" que si un appui est réellement en cours.
+    /// True between hotkey keyDown and release — ensures anti-blocking keyUp is only consumed during active press.
     var isKeyEngaged: Bool   = false
-    /// True pendant la capture d'un nouveau raccourci (recorder des réglages).
+    /// True while recording a new shortcut in settings.
     var isCapturing: Bool    = false
-    /// Modificateur enfoncé pendant la capture (bindé seul à son relâchement).
+    /// Modifier held down during capture (bound standalone upon release).
     var pendingCaptureModifier: Int?
     var eventTap: CFMachPort?
 }
@@ -271,14 +270,12 @@ final class HotkeyManager {
 
     // MARK: - Hotkey capture (settings recorder)
 
-    /// Callback de capture, livré sur le MainActor. Nil = capture annulée (Échap).
+    /// Capture completion delivered on MainActor. Nil means cancelled (Escape).
     private var captureCompletion: (@MainActor (HotKey?) -> Void)?
 
-    /// Capture la prochaine touche (ou modificateur seul) comme nouveau raccourci,
-    /// en consommant l'événement. C'est la seule voie qui voit les touches
-    /// spéciales comme la touche dictée (176), invisibles aux moniteurs NSEvent.
-    /// Retourne true si le tap est actif (la capture aura bien lieu) ;
-    /// false si l'appelant doit se replier sur des moniteurs NSEvent.
+    /// Captures the next key (or standalone modifier) as the new shortcut, consuming the event.
+    /// Intercepts special keys like Dictation (176), invisible to NSEvent monitors.
+    /// Returns true if tap is active; false if caller should fall back to NSEvent monitors.
     @discardableResult
     func beginHotKeyCapture(_ completion: @escaping @MainActor (HotKey?) -> Void) -> Bool {
         captureCompletion?(nil)
@@ -296,7 +293,7 @@ final class HotkeyManager {
         completion?(nil)
     }
 
-    /// Appelé depuis le thread du tap quand une touche a été capturée (ou Échap).
+    /// Called from tap thread when a key was captured (or Escape).
     nonisolated private func completeCapture(with key: HotKey?) {
         tapBox.tapState.isCapturing = false
         tapBox.tapState.pendingCaptureModifier = nil
@@ -392,8 +389,8 @@ final class HotkeyManager {
                          | CGEventFlags.maskCommand.rawValue
         var eventFlagsRaw = event.flags.rawValue & relevantMask
 
-        // Pour les touches de modification utilisées comme touche principale :
-        // on soustrait leur propre flag pour ignorer l'auto-modification.
+        // For modifier keys used as primary key:
+        // subtract their own flag to ignore self-modification.
         var isModifierDown = false
         let modifierKeyCodes: Set<Int> = [54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
         if modifierKeyCodes.contains(eventKeyCode) {
@@ -416,8 +413,7 @@ final class HotkeyManager {
             }
         }
 
-        // Mode capture (recorder des réglages) : la prochaine touche devient
-        // le nouveau raccourci et tout est consommé le temps de la capture.
+        // Capture mode: next key becomes new shortcut; consume all events during capture.
         if tapBox.tapState.isCapturing {
             return handleCaptureEvent(
                 type: type,
@@ -427,18 +423,15 @@ final class HotkeyManager {
             )
         }
 
-        // On n'agit QUE si c'est la touche principale du raccourci.
+        // Only act if this is the target shortcut key.
         guard eventKeyCode == targetKeyCode else {
             return Unmanaged.passUnretained(event)
         }
 
-        // Vérifier la concordance des modificateurs.
+        // Verify matching modifier flags.
         guard eventFlagsRaw == targetModifiersRaw else {
-            // Les modificateurs ne correspondent pas.
-            // Si un appui du raccourci est en cours (ex: modificateur relâché
-            // avant la touche de base), on termine proprement avec keyUp.
-            // Sinon, la touche est un appui ordinaire : elle doit traverser
-            // (sans quoi binder ⌥Espace casserait la touche Espace seule).
+            // Modifiers mismatch. If a press is engaged (e.g. modifier released before base key),
+            // cleanly finish with keyUp. Otherwise let event pass through (e.g. Space without Option).
             let isRelease: Bool
             if type == .flagsChanged {
                 isRelease = !isModifierDown
@@ -453,7 +446,7 @@ final class HotkeyManager {
             return Unmanaged.passUnretained(event)
         }
 
-        // Modifier OK → déterminer si c'est un appui ou un relâchement.
+        // Modifiers match: determine if press or release.
         let isDown: Bool
         if type == .flagsChanged {
             isDown = isModifierDown
@@ -462,8 +455,7 @@ final class HotkeyManager {
         }
 
         if isDown {
-            // Répétition automatique : consommée mais sans re-déclencher,
-            // sinon le mode Basculer alterne start/stop en boucle.
+            // Autorepeat: consume without retriggering to avoid toggle oscillation.
             if type == .keyDown, event.getIntegerValueField(.keyboardEventAutorepeat) != 0 {
                 return nil
             }
@@ -476,9 +468,7 @@ final class HotkeyManager {
         return nil
     }
 
-    /// Gère un événement pendant la capture d'un nouveau raccourci.
-    /// Tout est consommé : ni l'ancien raccourci ni le système (dictée Apple…)
-    /// ne doivent réagir pendant qu'on enregistre la combinaison.
+    /// Handles events during shortcut recording. Consumes all events to suppress other handlers.
     nonisolated private func handleCaptureEvent(
         type: CGEventType,
         keyCode: Int,
@@ -487,7 +477,7 @@ final class HotkeyManager {
     ) -> Unmanaged<CGEvent>? {
         switch type {
         case .keyDown:
-            if keyCode == 53 {  // Échap annule
+            if keyCode == 53 {  // Escape cancels
                 completeCapture(with: nil)
             } else {
                 completeCapture(with: HotKey(keyCode: keyCode, modifiers: Int(maskedFlags)))
@@ -503,8 +493,7 @@ final class HotkeyManager {
             if isModifierDown {
                 tapBox.tapState.pendingCaptureModifier = keyCode
             } else if tapBox.tapState.pendingCaptureModifier == keyCode {
-                // Modificateur seul : bindé à son relâchement (comme un vrai
-                // recorder — laisse la possibilité de faire modif+touche).
+                // Standalone modifier: bound on release (allows modifier+key combinations).
                 completeCapture(with: HotKey(keyCode: keyCode, modifiers: 0))
             }
             return nil

@@ -317,7 +317,7 @@ private struct DecodingModeRow: View {
     }
 }
 
-// MARK: - VAD toggle row (avec téléchargement du modèle Silero)
+// MARK: - VAD toggle row (with Silero model download)
 
 /// Shared with the onboarding engine step, which offers the same toggle.
 struct VADToggleRow: View {

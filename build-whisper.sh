@@ -26,4 +26,8 @@ cmake "$WHISPER_DIR" \
 
 cmake --build . --config Release -j$(sysctl -n hw.logicalcpu)
 
+# cmake's configure_file writes package.json back into the submodule source tree,
+# which dirties the working tree and trips the clean-tree guard in scripts/release.sh.
+git -C "$WHISPER_DIR" checkout -- bindings/javascript/package.json 2>/dev/null || true
+
 echo "✅ libwhisper.a compilée dans $BUILD_DIR/bin/"

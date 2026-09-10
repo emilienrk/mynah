@@ -1585,17 +1585,6 @@
         }
       }
     },
-    "Noms de projets, CLI, jargon technique": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Project names, CLI, technical jargon"
-          }
-        }
-      }
-    },
     "Ponctuation soignée": {
       "extractionState": "manual",
       "localizations": {
@@ -1640,17 +1629,6 @@
         }
       }
     },
-    "Français soutenu": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Formal French"
-          }
-        }
-      }
-    },
     "Registre écrit, pour mails et courriers": {
       "extractionState": "manual",
       "localizations": {
@@ -1658,28 +1636,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Written register, for emails and letters"
-          }
-        }
-      }
-    },
-    "Franglais tech": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tech franglais"
-          }
-        }
-      }
-    },
-    "Ancre les termes anglais dans du français": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anchors English terms inside French"
           }
         }
       }
@@ -2406,6 +2362,127 @@
           "stringUnit": {
             "state": "translated",
             "value": "Decoding strategy, GPU acceleration, memory: in Settings › Engine, the day you want to dig in."
+          }
+        }
+      }
+    },
+    "Registre soutenu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formal register"
+          }
+        }
+      }
+    },
+    "Parler tech": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tech speech"
+          }
+        }
+      }
+    },
+    "Ancre les termes anglais dans la phrase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anchors English terms inside the sentence"
+          }
+        }
+      }
+    },
+    "Voici comment je veux que le texte sorte : des phrases complètes, avec des majuscules en début de phrase, des virgules là où il faut respirer, et un point à la fin. Les questions se terminent par un point d'interrogation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Here is how I want the text to come out: complete sentences, with a capital letter at the start, commas where you would pause, and a period at the end. Questions end with a question mark."
+          }
+        }
+      }
+    },
+    "voilà comment je veux que ça sorte tout en minuscules sans ponctuation ni majuscules juste le texte au fil de la parole comme dans un message rapide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "here is how i want it to come out all in lowercase with no punctuation and no capitals just the text as it comes like a quick message"
+          }
+        }
+      }
+    },
+    "Je vous remercie de votre retour. Vous trouverez ci-joint le document demandé ; je reste à votre disposition pour tout complément d'information. Bien cordialement.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thank you for your reply. Please find attached the document you asked for; I remain available should you need any further information. Kind regards."
+          }
+        }
+      }
+    },
+    "J'ai ouvert une pull request sur le repo, le build passe mais il reste deux tests flaky. On merge après review, puis je déploie en staging et je check les logs.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened a pull request on the repo, the build passes but two tests are still flaky. We merge after review, then I deploy to staging and check the logs."
+          }
+        }
+      }
+    },
+    "Aucune parole détectée. Rapprochez-vous du micro et parlez un peu plus longtemps.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No speech detected. Move closer to the microphone and speak a little longer."
+          }
+        }
+      }
+    },
+    "Git, GitHub, Docker, Kubernetes, npm, Python, JavaScript, TypeScript, React, Node, API REST, JSON, SQL, backend, frontend, pull request, commit, merge, refactor, endpoint, build, runtime, déploiement.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git, GitHub, Docker, Kubernetes, npm, Python, JavaScript, TypeScript, React, Node, REST API, JSON, SQL, backend, frontend, pull request, commit, merge, refactor, endpoint, build, runtime, deployment."
+          }
+        }
+      }
+    },
+    "Kubernetes, PostgreSQL, Figma, Slack. Voici une phrase ponctuée normalement, avec des virgules et un point final.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kubernetes, PostgreSQL, Figma, Slack. Here is a normally punctuated sentence, with commas and a final period."
+          }
+        }
+      }
+    },
+    "Outils, langages, jargon technique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tools, languages, technical jargon"
           }
         }
       }

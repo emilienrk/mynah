@@ -214,12 +214,13 @@ struct EngineSection: View {
     /// user already typed.
     private func append(_ preset: PromptPreset) {
         let current = settings.initialPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        settings.initialPrompt = current.isEmpty ? preset.text : current + "\n" + preset.text
+        let text = String(localized: preset.text)
+        settings.initialPrompt = current.isEmpty ? text : current + "\n" + text
     }
 
     /// Shows the intended usage by example, since the field steers by imitation.
-    private static let promptPlaceholder =
-        "Whispeur, xcodegen, Sparkle, nix-darwin, OrbStack. Voici une phrase ponctuée normalement, avec des virgules et un point final."
+    private static let promptPlaceholder: LocalizedStringKey =
+        "Kubernetes, PostgreSQL, Figma, Slack. Voici une phrase ponctuée normalement, avec des virgules et un point final."
 }
 
 // MARK: - Decoding mode row

@@ -376,6 +376,15 @@ struct OnboardingView: View {
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.7))
                         }
+                    } else if services.coordinator.lastRunWasSilent {
+                        HStack(spacing: 6) {
+                            Image(systemName: "waveform.slash")
+                                .font(.system(size: 11))
+                            Text("Aucune parole détectée. Rapprochez-vous du micro et parlez un peu plus longtemps.")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundStyle(.orange.opacity(0.9))
+                        .multilineTextAlignment(.center)
                     } else {
                         Text(services.coordinator.lastTranscription.isEmpty
                              ? "En attente de votre première dictée…"

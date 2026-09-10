@@ -40,6 +40,9 @@ final class RecordingCoordinator {
 
     private(set) var pipelineState: PipelineState = .idle
     private(set) var lastTranscription: String = ""
+    /// True when the last run transcribed successfully but produced nothing. Distinct
+    /// from "never ran": callers must be able to say so instead of looking idle.
+    private(set) var lastRunWasSilent: Bool = false
     private(set) var lastError: String?
 
     // MARK: Services (injected)
@@ -179,6 +182,7 @@ final class RecordingCoordinator {
 
         // Model is ready; transition to active recording state.
         pipelineState = .recording
+        lastRunWasSilent = false
         startRecordingWatchdog()
         logger.info("Pipeline started — recording…")
     }
@@ -223,6 +227,7 @@ final class RecordingCoordinator {
         unloadModel()
 
         guard !text.isEmpty else {
+            lastRunWasSilent = true
             pipelineState = .idle
             return
         }

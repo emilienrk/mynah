@@ -14,8 +14,9 @@ struct PromptPreset: Identifiable, Equatable {
     let id: String
     let title: LocalizedStringResource
     let subtitle: LocalizedStringResource
-    /// Stays French: it is fed to Whisper as sample text, not shown as a label.
-    let text: String
+    /// Localized like the labels: Whisper reads it as prior context, so French sample
+    /// text would pull an English dictation toward French.
+    let text: LocalizedStringResource
 
     /// whisper.cpp keeps at most whisper_n_text_ctx/2 tokens (224) and drops the rest
     /// from the left. Roughly 4 characters per token in French, kept as a UI-side
@@ -26,8 +27,8 @@ struct PromptPreset: Identifiable, Equatable {
         PromptPreset(
             id: "dev",
             title: "Dev & outils",
-            subtitle: "Noms de projets, CLI, jargon technique",
-            text: "Whispeur, xcodegen, Sparkle, whisper.cpp, ggml, nix-darwin, OrbStack, pnpm, Swift, SwiftUI, Xcode, GitHub, pull request, commit, rebase, refactor, endpoint, build, runtime."
+            subtitle: "Outils, langages, jargon technique",
+            text: "Git, GitHub, Docker, Kubernetes, npm, Python, JavaScript, TypeScript, React, Node, API REST, JSON, SQL, backend, frontend, pull request, commit, merge, refactor, endpoint, build, runtime, déploiement."
         ),
         PromptPreset(
             id: "punctuation",
@@ -43,14 +44,14 @@ struct PromptPreset: Identifiable, Equatable {
         ),
         PromptPreset(
             id: "formal",
-            title: "Français soutenu",
+            title: "Registre soutenu",
             subtitle: "Registre écrit, pour mails et courriers",
             text: "Je vous remercie de votre retour. Vous trouverez ci-joint le document demandé ; je reste à votre disposition pour tout complément d'information. Bien cordialement."
         ),
         PromptPreset(
             id: "franglais",
-            title: "Franglais tech",
-            subtitle: "Ancre les termes anglais dans du français",
+            title: "Parler tech",
+            subtitle: "Ancre les termes anglais dans la phrase",
             text: "J'ai ouvert une pull request sur le repo, le build passe mais il reste deux tests flaky. On merge après review, puis je déploie en staging et je check les logs."
         )
     ]

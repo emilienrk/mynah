@@ -120,8 +120,9 @@ struct EngineConfigTests {
         #expect(PromptPreset.all.isEmpty == false)
 
         for preset in PromptPreset.all {
-            #expect(preset.text.isEmpty == false)
-            #expect(preset.text.count <= PromptPreset.approximateCharacterBudget)
+            let text = String(localized: preset.text)
+            #expect(text.isEmpty == false)
+            #expect(text.count <= PromptPreset.approximateCharacterBudget)
         }
 
         let titles = Set(PromptPreset.all.map(\.id))

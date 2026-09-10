@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Release Whispeur : bump version, build, DMG, appcast signé, GitHub Release.
+# Release Mynah : bump version, build, DMG, appcast signé, GitHub Release.
 # Usage : scripts/release.sh 1.0.1
 set -euo pipefail
 
@@ -23,9 +23,9 @@ make dmg
 #    publiée dans l'appcast : le dossier ne contient qu'un DMG.
 mkdir -p releases
 rm -f releases/*.dmg releases/appcast.xml
-cp Whispeur.dmg "releases/Whispeur-$VERSION.dmg"
+cp Mynah.dmg "releases/Mynah-$VERSION.dmg"
 tools/sparkle/bin/generate_appcast releases \
-    --download-url-prefix "https://github.com/emilienrk/whispeur/releases/download/v$VERSION/" \
+    --download-url-prefix "https://github.com/emilienrk/mynah/releases/download/v$VERSION/" \
     --maximum-deltas 0
 
 # 4. Commit du bump + tag.
@@ -37,9 +37,9 @@ git push origin main "v$VERSION"
 # 5. GitHub Release avec DMG + appcast (l'URL /releases/latest/download/appcast.xml
 #    utilisée par SUFeedURL pointe toujours sur la dernière release).
 gh release create "v$VERSION" \
-    "releases/Whispeur-$VERSION.dmg" \
+    "releases/Mynah-$VERSION.dmg" \
     releases/appcast.xml \
-    --title "Whispeur $VERSION" \
+    --title "Mynah $VERSION" \
     --generate-notes
 
 echo "✅ Release v$VERSION publiée."

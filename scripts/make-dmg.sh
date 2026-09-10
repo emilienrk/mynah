@@ -10,9 +10,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-APP="build/DerivedData/Build/Products/Release/Whispeur.app"
-VOLUME="Whispeur"
-OUTPUT="Whispeur.dmg"
+APP="build/DerivedData/Build/Products/Release/Mynah.app"
+VOLUME="Mynah"
+OUTPUT="Mynah.dmg"
 STAGING="$(mktemp -d)"
 RW_DMG="$(mktemp -u).dmg"
 
@@ -62,7 +62,7 @@ tell application "Finder"
         delay 1
         -- Placed last and re-applied after a reopen: setting the icon size
         -- makes the Finder relayout, which drags freshly set positions along.
-        set position of item "Whispeur.app" of container window to {150, $ICON_Y}
+        set position of item "Mynah.app" of container window to {150, $ICON_Y}
         set position of item "Applications" of container window to {450, $ICON_Y}
         -- Parked below the window: hidden-file mode still reveals it, so at
         -- least keep it from landing on top of the app icon.
@@ -72,7 +72,7 @@ tell application "Finder"
         open
         delay 1
         set the bounds of container window to {200, 120, $((200 + WINDOW_WIDTH)), $((120 + WINDOW_HEIGHT))}
-        set position of item "Whispeur.app" of container window to {150, $ICON_Y}
+        set position of item "Mynah.app" of container window to {150, $ICON_Y}
         set position of item "Applications" of container window to {450, $ICON_Y}
         -- Parked below the window: hidden-file mode still reveals it, so at
         -- least keep it from landing on top of the app icon.

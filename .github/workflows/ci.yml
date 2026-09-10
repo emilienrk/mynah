@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   test:
-    # Whispeur targets macOS 26 (project.yml: deploymentTarget). A runner with an
+    # Mynah targets macOS 26 (project.yml: deploymentTarget). A runner with an
     # older SDK cannot compile it at all, so the image is pinned rather than "latest".
     runs-on: macos-26
 
@@ -42,6 +42,6 @@ jobs:
       - name: Run tests
         run: |
           xcodebuild test \
-            -scheme WhispeurTests \
+            -scheme MynahTests \
             -destination 'platform=macOS' \
             CODE_SIGNING_ALLOWED=NO

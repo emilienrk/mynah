@@ -18,7 +18,7 @@ setup:
 	xcodegen generate
 
 build: setup
-	xcodebuild -scheme Whispeur -configuration Release build -derivedDataPath "$(PWD)/build/DerivedData"
+	xcodebuild -scheme Mynah -configuration Release build -derivedDataPath "$(PWD)/build/DerivedData"
 
 dmg: build
 	./scripts/make-dmg.sh
@@ -26,5 +26,5 @@ dmg: build
 clean:
 	rm -rf build
 	rm -rf build-whisper
-	rm -f Whispeur.dmg
-	rm -rf Whispeur.xcodeproj
+	rm -f Mynah.dmg
+	rm -rf Mynah.xcodeproj

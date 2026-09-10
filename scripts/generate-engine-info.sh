@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Génère Whispeur/Generated/EngineBuildInfo.generated.swift avec le commit
+# Génère Mynah/Generated/EngineBuildInfo.generated.swift avec le commit
 # du submodule whisper.cpp. Idempotent : ne réécrit pas si inchangé.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT_DIR="$ROOT/Whispeur/Generated"
+OUT_DIR="$ROOT/Mynah/Generated"
 OUT="$OUT_DIR/EngineBuildInfo.generated.swift"
 
 COMMIT="$(git -C "$ROOT/whisper.cpp" rev-parse --short HEAD 2>/dev/null || echo unknown)"

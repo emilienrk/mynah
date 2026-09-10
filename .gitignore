@@ -1,12 +1,13 @@
 .DS_Store
 .agents
 build-whisper/
-Whispeur.xcodeproj/
+Mynah.xcodeproj/
 Models/*.bin
 Samples/*.wav
 build/
 *.dmg
-Whispeur.dmg
-Whispeur/Generated/
+Mynah.dmg
+Mynah/Generated/
 tools/
 releases/
+docs/

@@ -1,6 +1,6 @@
-name: Whispeur
+name: Mynah
 options:
-  bundleIdPrefix: com.whispeur
+  bundleIdPrefix: com.mynah
   deploymentTarget:
     macOS: "26.0"
 
@@ -15,20 +15,20 @@ packages:
     from: "2.6.0"
 
 targets:
-  Whispeur:
+  Mynah:
     type: application
     platform: macOS
     sources:
-      - path: Whispeur
+      - path: Mynah
     info:
-      path: Whispeur/Info.plist
+      path: Mynah/Info.plist
       properties:
         LSUIElement: true
-        NSMicrophoneUsageDescription: "Whispeur a besoin du micro pour la dictée vocale."
-        NSSpeechRecognitionUsageDescription: "Whispeur utilise la reconnaissance vocale."
+        NSMicrophoneUsageDescription: "Mynah a besoin du micro pour la dictée vocale."
+        NSSpeechRecognitionUsageDescription: "Mynah utilise la reconnaissance vocale."
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        SUFeedURL: "https://github.com/emilienrk/whispeur/releases/latest/download/appcast.xml"
+        SUFeedURL: "https://github.com/emilienrk/mynah/releases/latest/download/appcast.xml"
         SUPublicEDKey: "+BIJxDTK42OgI/4W1HXnyo2OHMDPmswJ4kBAKbppgjQ="
         SUEnableAutomaticChecks: true
     preBuildScripts:
@@ -38,8 +38,8 @@ targets:
         basedOnDependencyAnalysis: false
     settings:
       base:
-        PRODUCT_NAME: Whispeur
-        PRODUCT_MODULE_NAME: Whispeur
+        PRODUCT_NAME: Mynah
+        PRODUCT_MODULE_NAME: Mynah
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "1.7.1"
         CURRENT_PROJECT_VERSION: "111"
@@ -51,7 +51,7 @@ targets:
           - "@executable_path/../Frameworks"
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_ENTITLEMENTS: "Whispeur/Whispeur.entitlements"
+        CODE_SIGN_ENTITLEMENTS: "Mynah/Mynah.entitlements"
         ALWAYS_SEARCH_USER_PATHS: "NO"
         SWIFT_EMIT_LOC_STRINGS: "YES"
         LIBRARY_SEARCH_PATHS:
@@ -62,7 +62,7 @@ targets:
         HEADER_SEARCH_PATHS:
           - "$(SRCROOT)/whisper.cpp/include"
           - "$(SRCROOT)/whisper.cpp/ggml/include"
-        SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/Whispeur/Bridge/WhisperBridge.h"
+        SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/Mynah/Bridge/WhisperBridge.h"
         OTHER_LDFLAGS:
           - "-L$(SRCROOT)/build-whisper/src"
           - "-L$(SRCROOT)/build-whisper/ggml/src"
@@ -87,32 +87,32 @@ targets:
     dependencies:
       - package: Sparkle
 
-  WhispeurTests:
+  MynahTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: WhispeurTests
+      - path: MynahTests
       # Include only the files under test — app targets don't export Swift modules.
-      - path: Whispeur/Models
-      - path: Whispeur/Services/HistoryService.swift
-      - path: Whispeur/Services/MicrophonePermissionManager.swift
-      - path: Whispeur/Services/RecordingCoordinator.swift
-      - path: Whispeur/Services/AudioCaptureService.swift
-      - path: Whispeur/Services/ClipboardService.swift
-      - path: Whispeur/Services/WhisperService.swift
-      - path: Whispeur/Services/HotkeyManager.swift
-      - path: Whispeur/Services/MediaPlaybackController.swift
-      - path: Whispeur/Services/AudioProcessProbe.swift
-      - path: Whispeur/Services/SystemSoundLibrary.swift
-      - path: Whispeur/Services/NotificationService.swift
-      - path: Whispeur/Bridge
+      - path: Mynah/Models
+      - path: Mynah/Services/HistoryService.swift
+      - path: Mynah/Services/MicrophonePermissionManager.swift
+      - path: Mynah/Services/RecordingCoordinator.swift
+      - path: Mynah/Services/AudioCaptureService.swift
+      - path: Mynah/Services/ClipboardService.swift
+      - path: Mynah/Services/WhisperService.swift
+      - path: Mynah/Services/HotkeyManager.swift
+      - path: Mynah/Services/MediaPlaybackController.swift
+      - path: Mynah/Services/AudioProcessProbe.swift
+      - path: Mynah/Services/SystemSoundLibrary.swift
+      - path: Mynah/Services/NotificationService.swift
+      - path: Mynah/Bridge
     settings:
       base:
         SWIFT_VERSION: 6.0
         GENERATE_INFOPLIST_FILE: "YES"
         CODE_SIGN_IDENTITY: "-"
-        PRODUCT_NAME: WhispeurTests
-        PRODUCT_MODULE_NAME: WhispeurTests
+        PRODUCT_NAME: MynahTests
+        PRODUCT_MODULE_NAME: MynahTests
         ALWAYS_SEARCH_USER_PATHS: "NO"
         LIBRARY_SEARCH_PATHS:
           - "$(SRCROOT)/build-whisper/src"
@@ -122,7 +122,7 @@ targets:
         HEADER_SEARCH_PATHS:
           - "$(SRCROOT)/whisper.cpp/include"
           - "$(SRCROOT)/whisper.cpp/ggml/include"
-        SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/Whispeur/Bridge/WhisperBridge.h"
+        SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/Mynah/Bridge/WhisperBridge.h"
         OTHER_LDFLAGS:
           - "-L$(SRCROOT)/build-whisper/src"
           - "-L$(SRCROOT)/build-whisper/ggml/src"

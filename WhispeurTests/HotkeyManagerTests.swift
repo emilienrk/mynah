@@ -66,7 +66,8 @@ struct HotkeyManagerTests {
     func defaultHotKeyIsDictationKey() {
         #expect(HotKey.defaultHotKey.keyCode == 176)
         #expect(HotKey.defaultHotKey.modifiers == 0)
-        #expect(HotKey.defaultHotKey.displayString.contains("Dictée"))
+        let name = HotKey.defaultHotKey.displayString
+        #expect(name.contains("Dictée") || name.contains("Dictation"))
     }
 
     @Test("Bound dictation key is consumed (Apple dictation must not receive it)")

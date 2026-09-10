@@ -4,6 +4,11 @@ options:
   deploymentTarget:
     macOS: "26.0"
 
+settings:
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle

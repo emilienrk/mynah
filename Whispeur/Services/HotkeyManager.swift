@@ -42,6 +42,16 @@ struct HotKey: Equatable, Sendable, Codable {
     /// (160 is Mission Control/F3, not the dictation key.)
     static let defaultHotKey = HotKey(keyCode: 176, modifiers: 0)
 
+    /// Word-based key names are the only ones that need translating; symbols are universal.
+    private static func localizedKeyName(_ name: String) -> String {
+        switch name {
+        case "Espace": return String(localized: "Espace")
+        case "Dictée": return String(localized: "Dictée")
+        case "Mission Control": return String(localized: "Mission Control")
+        default: return name
+        }
+    }
+
     private static func keyCodeToString(_ keyCode: Int) -> String? {
         // Special and function keys
         let specialMap: [Int: String] = [
@@ -56,7 +66,7 @@ struct HotKey: Equatable, Sendable, Codable {
         ]
         
         if let special = specialMap[keyCode] {
-            return special
+            return localizedKeyName(special)
         }
         
         // Dynamic resolution for alphanumeric keys based on keyboard layout (QWERTY/AZERTY...)

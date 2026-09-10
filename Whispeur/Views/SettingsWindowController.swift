@@ -111,6 +111,32 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSWindowDeleg
     private func setupMainMenuIfNeeded() {
         let mainMenu = NSApp.mainMenu ?? NSMenu()
 
+        // macOS renders the first top-level item as the application menu. Without one,
+        // the Edit menu below would be swallowed into it and lose About/Hide/Quit.
+        if mainMenu.items.isEmpty {
+            let appMenuItem = NSMenuItem()
+            let appMenu = NSMenu()
+            appMenu.addItem(
+                withTitle: String(localized: "À propos de Whispeur"),
+                action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
+                keyEquivalent: ""
+            )
+            appMenu.addItem(.separator())
+            appMenu.addItem(
+                withTitle: String(localized: "Masquer Whispeur"),
+                action: #selector(NSApplication.hide(_:)),
+                keyEquivalent: "h"
+            )
+            appMenu.addItem(.separator())
+            appMenu.addItem(
+                withTitle: String(localized: "Quitter Whispeur"),
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
+            )
+            appMenuItem.submenu = appMenu
+            mainMenu.addItem(appMenuItem)
+        }
+
         let hasEditMenu = mainMenu.items.contains { $0.submenu?.items.contains { $0.action == #selector(NSText.copy(_:)) } == true }
         if !hasEditMenu {
             let editMenuItem = NSMenuItem()

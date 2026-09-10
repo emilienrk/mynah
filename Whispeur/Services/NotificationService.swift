@@ -47,8 +47,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         )
         center.setNotificationCategories([category])
 
-        Task {
-            await requestAuthorizationIfNeeded()
+        // Onboarding already asks for microphone and accessibility; don't stack a third
+        // system prompt on top of it. Otherwise the first notification asks lazily.
+        if AppSettings.shared.hasCompletedOnboarding {
+            Task {
+                await requestAuthorizationIfNeeded()
+            }
         }
     }
 

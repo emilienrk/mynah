@@ -185,8 +185,8 @@ final class RecordingCoordinator {
 
     /// Phase 2: stop audio, transcribe, paste, unload model.
     func finishRecording() {
-        stopRecordingWatchdog()
         guard pipelineState == .recording || pipelineState == .loadingModel else { return }
+        stopRecordingWatchdog()
 
         let samples = audioCapture.stopRecording()
 
@@ -319,9 +319,12 @@ final class RecordingCoordinator {
         recordingWatchdogTask = nil
     }
 
+#if DEBUG
+    /// Test-only hook: drives the pipeline without real audio hardware. Debug builds only.
     func setPipelineStateForTesting(_ state: PipelineState) {
         self.pipelineState = state
     }
+#endif
 }
 
 // MARK: - Audio feedback

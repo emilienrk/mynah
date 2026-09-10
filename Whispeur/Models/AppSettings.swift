@@ -45,6 +45,10 @@ final class AppSettings {
         _pauseMediaWhileRecording = (ud.object(forKey: "pauseMediaWhileRecording") as? Bool) ?? true
         _useBeamSearch         = (ud.object(forKey: "useBeamSearch") as? Bool) ?? false
         _beamSize              = (ud.object(forKey: "beamSize") as? Int) ?? 5
+        // Engine knobs dropped in 1.7.1: nothing reads them any more.
+        for stale in ["temperature", "noSpeechThreshold", "conditionOnPrevious"] {
+            ud.removeObject(forKey: stale)
+        }
         _useGPU                = (ud.object(forKey: "useGPU") as? Bool) ?? true
         _modelUnloadDelay      = (ud.object(forKey: "modelUnloadDelay") as? Double) ?? 0.0
         _initialPrompt         = ud.string(forKey: "initialPrompt") ?? ""

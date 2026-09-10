@@ -2377,17 +2377,6 @@
         }
       }
     },
-    "Stratégie de décodage, vocabulaire, filtrage du silence : dans Réglages › Moteur, le jour où vous voudrez creuser.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decoding strategy, vocabulary, silence filtering: in Settings › Engine, the day you want to dig in."
-          }
-        }
-      }
-    },
     "Filtrage du silence": {
       "extractionState": "manual",
       "localizations": {
@@ -2406,6 +2395,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hardware"
+          }
+        }
+      }
+    },
+    "Stratégie de décodage, accélération GPU, mémoire : dans Réglages › Moteur, le jour où vous voudrez creuser.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decoding strategy, GPU acceleration, memory: in Settings › Engine, the day you want to dig in."
           }
         }
       }

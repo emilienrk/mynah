@@ -210,39 +210,6 @@
         }
       }
     },
-    "Conditionne la transcription sur les segments précédents. Améliore la cohérence sur les longues sessions.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conditions transcription on previous segments. Improves coherence on long sessions."
-          }
-        }
-      }
-    },
-    "Contexte & Matériel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Context & Hardware"
-          }
-        }
-      }
-    },
-    "Contexte précédent": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previous Context"
-          }
-        }
-      }
-    },
     "Copier": {
       "extractionState": "manual",
       "localizations": {
@@ -272,17 +239,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pauses whatever is playing during dictation, then resumes it."
-          }
-        }
-      }
-    },
-    "Créatif": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Creative"
           }
         }
       }
@@ -327,17 +283,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Launch at Login"
-          }
-        }
-      }
-    },
-    "Déterministe": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deterministic"
           }
         }
       }
@@ -661,17 +606,6 @@
         }
       }
     },
-    "Qualité & Précision": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quality & Precision"
-          }
-        }
-      }
-    },
     "Quitter Whispeur": {
       "extractionState": "manual",
       "localizations": {
@@ -716,39 +650,6 @@
         }
       }
     },
-    "Sensible": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sensitive"
-          }
-        }
-      }
-    },
-    "Seuil de silence": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Silence Threshold"
-          }
-        }
-      }
-    },
-    "Si la proba de silence dépasse ce seuil, le segment est ignoré. Augmenter réduit les hallucinations.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "If silence probability exceeds this threshold, the segment is ignored. Increasing reduces hallucinations."
-          }
-        }
-      }
-    },
     "Stratégie de décodage": {
       "extractionState": "manual",
       "localizations": {
@@ -756,28 +657,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Decoding Strategy"
-          }
-        }
-      }
-    },
-    "Stratégie de décodage, température, seuil de silence : dans Réglages › Moteur, le jour où vous voudrez creuser.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decoding strategy, temperature, silence threshold: in Settings › Engine, the day you want to dig in."
-          }
-        }
-      }
-    },
-    "Strict": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Strict"
           }
         }
       }
@@ -877,17 +756,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Time before unloading the model from RAM after dictation. 0s = immediate."
-          }
-        }
-      }
-    },
-    "Température": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Temperature"
           }
         }
       }
@@ -1042,17 +910,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Whispeur needs Accessibility access to detect the global shortcut."
-          }
-        }
-      }
-    },
-    "À 0, la transcription est reproductible. Plus haute = plus de variété, mais aussi plus d'erreurs.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "At 0, transcription is reproducible. Higher = more variety, but also more errors."
           }
         }
       }
@@ -1603,17 +1460,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "No recent transcription."
-          }
-        }
-      }
-    },
-    "Détection de voix (VAD)": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voice activity detection (VAD)"
           }
         }
       }
@@ -2527,6 +2373,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mission Control"
+          }
+        }
+      }
+    },
+    "Stratégie de décodage, vocabulaire, filtrage du silence : dans Réglages › Moteur, le jour où vous voudrez creuser.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decoding strategy, vocabulary, silence filtering: in Settings › Engine, the day you want to dig in."
+          }
+        }
+      }
+    },
+    "Filtrage du silence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silence filtering"
+          }
+        }
+      }
+    },
+    "Matériel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hardware"
           }
         }
       }

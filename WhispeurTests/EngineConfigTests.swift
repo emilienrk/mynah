@@ -23,18 +23,32 @@ struct EngineConfigTests {
     func existingSettingsMapping() {
         let s = AppSettings.shared
         let savedBeam = s.useBeamSearch
-        let savedTemp = s.temperature
+        let savedSize = s.beamSize
         defer {
             s.useBeamSearch = savedBeam
-            s.temperature = savedTemp
+            s.beamSize = savedSize
         }
 
         s.useBeamSearch = true
-        s.temperature = 0.3
+        s.beamSize = 4
 
         let config = s.engineConfig
         #expect(config.useBeamSearch == true)
-        #expect(abs(config.temperature - 0.3) < 0.0001)
+        #expect(config.beamSize == 4)
+    }
+
+    @Test("beam size stays in a range where beam search is actually beam search")
+    func beamSizeClamped() {
+        let s = AppSettings.shared
+        let saved = s.beamSize
+        defer { s.beamSize = saved }
+
+        // 1 would decode exactly like greedy, contradicting the selected mode.
+        s.beamSize = 1
+        #expect(s.beamSize == 2)
+
+        s.beamSize = 99
+        #expect(s.beamSize == 8)
     }
 
     @Test("VAD disabled produces nil model path")

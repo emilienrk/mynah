@@ -50,7 +50,7 @@ struct EngineSection: View {
                                     .foregroundStyle(.white)
                                     .frame(width: 20, alignment: .center)
 
-                                Stepper("", value: $settings.beamSize, in: 1...10)
+                                Stepper("", value: $settings.beamSize, in: 2...8)
                                     .labelsHidden()
                             }
                         }
@@ -58,41 +58,6 @@ struct EngineSection: View {
                     }
                 }
                 .animation(.spring(duration: 0.25), value: settings.useBeamSearch)
-            }
-
-            // MARK: - Quality sliders
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 16) {
-                    SectionHeader(icon: "dial.medium.fill", title: "Qualité & Précision")
-
-                    // Temperature
-                    EngineSliderRow(
-                        icon: "thermometer.medium",
-                        label: "Température",
-                        value: $settings.temperature,
-                        range: 0.0...1.0,
-                        lowLabel: "Déterministe",
-                        highLabel: "Créatif",
-                        description: "À 0, la transcription est reproductible. Plus haute = plus de variété, mais aussi plus d'erreurs.",
-                        step: 0.05,
-                        format: { String(format: "%.2f", $0) }
-                    )
-
-                    Divider().opacity(0.08)
-
-                    // No speech threshold
-                    EngineSliderRow(
-                        icon: "waveform.slash",
-                        label: "Seuil de silence",
-                        value: $settings.noSpeechThreshold,
-                        range: 0.0...1.0,
-                        lowLabel: "Sensible",
-                        highLabel: "Strict",
-                        description: "Si la proba de silence dépasse ce seuil, le segment est ignoré. Augmenter réduit les hallucinations.",
-                        step: 0.05,
-                        format: { String(format: "%.2f", $0) }
-                    )
-                }
             }
 
             // MARK: - Vocabulary & style
@@ -166,10 +131,10 @@ struct EngineSection: View {
                 }
             }
 
-            // MARK: - VAD
+            // MARK: - Silence filtering
             SettingsCard {
                 VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "waveform.badge.mic", title: "Détection de voix (VAD)")
+                    SectionHeader(icon: "waveform.badge.mic", title: "Filtrage du silence")
                     VADToggleRow(settings: settings)
                 }
             }
@@ -177,16 +142,7 @@ struct EngineSection: View {
             // MARK: - Context & hardware
             SettingsCard {
                 VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "cpu.fill", title: "Contexte & Matériel")
-
-                    SettingsToggleRow(
-                        icon: "text.append",
-                        label: "Contexte précédent",
-                        description: "Conditionne la transcription sur les segments précédents. Améliore la cohérence sur les longues sessions.",
-                        isOn: $settings.conditionOnPreviousText
-                    )
-
-                    Divider().opacity(0.08)
+                    SectionHeader(icon: "cpu.fill", title: "Matériel")
 
                     SettingsToggleRow(
                         icon: "memorychip.fill",
@@ -209,10 +165,6 @@ struct EngineSection: View {
                             val == 0 ? "0s" : (val < 60 ? "\(Int(val))s" : "\(Int(val)/60)m\(Int(val)%60 > 0 ? " \(Int(val)%60)s" : "")")
                         }
                     )
-
-                    Text("Certains changements prennent effet au prochain enregistrement.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.25))
                 }
             }
 
@@ -246,6 +198,10 @@ struct EngineSection: View {
                         .foregroundStyle(.white.opacity(0.3))
                 }
             }
+
+            Text("Certains changements prennent effet au prochain enregistrement.")
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.25))
         }
     }
 

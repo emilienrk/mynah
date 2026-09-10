@@ -45,9 +45,6 @@ final class AppSettings {
         _pauseMediaWhileRecording = (ud.object(forKey: "pauseMediaWhileRecording") as? Bool) ?? true
         _useBeamSearch         = (ud.object(forKey: "useBeamSearch") as? Bool) ?? false
         _beamSize              = (ud.object(forKey: "beamSize") as? Int) ?? 5
-        _temperature           = (ud.object(forKey: "temperature") as? Double) ?? 0.0
-        _noSpeechThreshold     = (ud.object(forKey: "noSpeechThreshold") as? Double) ?? 0.6
-        _conditionOnPrevious   = (ud.object(forKey: "conditionOnPrevious") as? Bool) ?? false
         _useGPU                = (ud.object(forKey: "useGPU") as? Bool) ?? true
         _modelUnloadDelay      = (ud.object(forKey: "modelUnloadDelay") as? Double) ?? 0.0
         _initialPrompt         = ud.string(forKey: "initialPrompt") ?? ""
@@ -222,34 +219,7 @@ final class AppSettings {
     /// Number of beams (1–10). Only used when useBeamSearch is true.
     var beamSize: Int {
         get { _beamSize }
-        set { _beamSize = min(10, max(1, newValue)) }
-    }
-
-    private var _temperature: Double {
-        didSet { UserDefaults.standard.set(_temperature, forKey: "temperature") }
-    }
-    /// Sampling temperature (0.0 = deterministic, 1.0 = random).
-    var temperature: Double {
-        get { _temperature }
-        set { _temperature = min(1.0, max(0.0, newValue)) }
-    }
-
-    private var _noSpeechThreshold: Double {
-        didSet { UserDefaults.standard.set(_noSpeechThreshold, forKey: "noSpeechThreshold") }
-    }
-    /// Probability threshold to mark a segment as silence and skip it.
-    var noSpeechThreshold: Double {
-        get { _noSpeechThreshold }
-        set { _noSpeechThreshold = min(1.0, max(0.0, newValue)) }
-    }
-
-    private var _conditionOnPrevious: Bool {
-        didSet { UserDefaults.standard.set(_conditionOnPrevious, forKey: "conditionOnPrevious") }
-    }
-    /// Feed previous output as context for next segment (improves coherence on long sessions).
-    var conditionOnPreviousText: Bool {
-        get { _conditionOnPrevious }
-        set { _conditionOnPrevious = newValue }
+        set { _beamSize = min(8, max(2, newValue)) }
     }
 
     private var _useGPU: Bool {
@@ -295,9 +265,6 @@ final class AppSettings {
         return WhisperEngineConfig(
             useBeamSearch: useBeamSearch,
             beamSize: beamSize,
-            temperature: Float(temperature),
-            noSpeechThreshold: Float(noSpeechThreshold),
-            conditionOnPreviousText: conditionOnPreviousText,
             useGPU: useGPU,
             initialPrompt: initialPrompt,
             vadEnabled: vadEnabled,

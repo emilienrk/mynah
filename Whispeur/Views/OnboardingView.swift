@@ -284,7 +284,7 @@ struct OnboardingView: View {
                     vocabularyPicker
                 }
 
-                Text("Stratégie de décodage, température, seuil de silence : dans Réglages › Moteur, le jour où vous voudrez creuser.")
+                Text("Stratégie de décodage, vocabulaire, filtrage du silence : dans Réglages › Moteur, le jour où vous voudrez creuser.")
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.35))
                     .multilineTextAlignment(.center)

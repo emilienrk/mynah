@@ -27,9 +27,6 @@ enum WhisperServiceError: Error, LocalizedError {
 struct WhisperEngineConfig: Sendable {
     var useBeamSearch: Bool
     var beamSize: Int
-    var temperature: Float
-    var noSpeechThreshold: Float
-    var conditionOnPreviousText: Bool
     var useGPU: Bool
     var initialPrompt: String
     var vadEnabled: Bool
@@ -38,9 +35,6 @@ struct WhisperEngineConfig: Sendable {
     static let `default` = WhisperEngineConfig(
         useBeamSearch: false,
         beamSize: 5,
-        temperature: 0.0,
-        noSpeechThreshold: 0.6,
-        conditionOnPreviousText: false,
         useGPU: true,
         initialPrompt: "",
         vadEnabled: false,
@@ -171,10 +165,11 @@ actor WhisperService {
         params.translate        = false
         params.n_threads        = Int32(maxThreads)
         params.offset_ms        = 0
-        params.no_context       = !config.conditionOnPreviousText
+        // Each dictation is a one-shot call on a context that outlives it, so the rolling
+        // prompt must be cleared: otherwise the previous dictation primes the next one.
+        // Segments within a single call still condition on each other regardless.
+        params.no_context       = true
         params.single_segment   = false
-        params.temperature      = config.temperature
-        params.no_speech_thold  = config.noSpeechThreshold
         if config.useBeamSearch {
             params.beam_search.beam_size = Int32(config.beamSize)
         }

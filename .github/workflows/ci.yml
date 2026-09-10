@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Whispeur targets macOS 26 (project.yml: deploymentTarget). A runner with an
+    # older SDK cannot compile it at all, so the image is pinned rather than "latest".
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Resolve whisper.cpp revision
+        id: whisper
+        run: echo "sha=$(git rev-parse HEAD:whisper.cpp)" >> "$GITHUB_OUTPUT"
+
+      # Compiling whisper.cpp takes minutes and only changes when the submodule moves.
+      - name: Cache whisper.cpp build
+        uses: actions/cache@v4
+        with:
+          path: build-whisper
+          key: whisper-${{ runner.os }}-${{ steps.whisper.outputs.sha }}-${{ hashFiles('build-whisper.sh') }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # build-whisper.sh + generate-engine-info.sh + xcodegen generate
+      - name: Generate project
+        run: make setup
+
+      - name: Run tests
+        run: |
+          xcodebuild test \
+            -scheme WhispeurTests \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO

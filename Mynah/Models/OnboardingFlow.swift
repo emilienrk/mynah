@@ -53,15 +53,15 @@ final class OnboardingFlow {
         }
     }
 
-    /// Microphone and model are blocking: without them Mynah cannot dictate
-    /// at all. Accessibility only degrades auto-paste to a clipboard copy, so
-    /// refusing it must not trap the user on that page.
+    /// Every permission here is blocking: without the microphone there is nothing
+    /// to transcribe, and without Accessibility the hotkey's event tap never fires.
     var canAdvance: Bool {
         switch step {
-        case .welcome, .accessibility, .engineOverview, .engine, .hotkey: return true
-        case .microphone: return requirements.isMicrophoneGranted
-        case .model:      return requirements.hasUsableModel
-        case .done:       return false
+        case .welcome, .engineOverview, .engine, .hotkey: return true
+        case .microphone:    return requirements.isMicrophoneGranted
+        case .accessibility: return requirements.isAccessibilityGranted
+        case .model:         return requirements.hasUsableModel
+        case .done:          return false
         }
     }
 

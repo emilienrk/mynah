@@ -50,14 +50,18 @@ struct OnboardingFlowTests {
         #expect(flow.step == .accessibility)
     }
 
-    @Test("Accessibility can be skipped: it only degrades auto-paste")
-    func accessibilityIsOptional() {
+    @Test("Accessibility blocks until it is granted: the hotkey depends on it")
+    func accessibilityIsBlocking() {
         let requirements = FakeRequirements(mic: true)
         let flow = OnboardingFlow(requirements: requirements)
         flow.advance()
 
         #expect(flow.step == .accessibility)
-        #expect(flow.canAdvance == true)
+        #expect(flow.canAdvance == false)
+        flow.advance()
+        #expect(flow.step == .accessibility)
+
+        requirements.isAccessibilityGranted = true
         flow.advance()
         #expect(flow.step == .model)
     }

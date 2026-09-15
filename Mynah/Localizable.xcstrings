@@ -2519,6 +2519,17 @@
           }
         }
       }
+    },
+    "Mynah est déjà coché ? Retirez-le de la liste avec −, puis ajoutez-le à nouveau.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mynah already switched on? Remove it from the list with −, then add it again."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

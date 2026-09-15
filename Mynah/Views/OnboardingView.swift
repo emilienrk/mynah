@@ -138,6 +138,14 @@ struct OnboardingView: View {
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
 
+                            // macOS ties the grant to one exact build: after an update
+                            // the switch stays on but no longer applies to this copy.
+                            Text("Mynah est déjà coché ? Retirez-le de la liste avec −, puis ajoutez-le à nouveau.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white.opacity(0.45))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+
                             HStack(spacing: 12) {
                                 Button {
                                     relaunchApp()

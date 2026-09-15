@@ -406,8 +406,12 @@ struct OnboardingView: View {
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .padding(10)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
                         .fill(Color.white.opacity(0.05))
+                        .overlay(
+                            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
                 )
 
                 // Interactive test micro button
@@ -520,11 +524,16 @@ struct OnboardingView: View {
 
     private func onboardingCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(12)
+            .padding(14)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                    )
             )
+            .containerShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func statusLine(granted: Bool, text: LocalizedStringKey) -> some View {
@@ -605,11 +614,11 @@ struct OnboardingView: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
                 .fill(isSelected ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(
+                    ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
+                        .stroke(
                             isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.06),
                             lineWidth: 1
                         )

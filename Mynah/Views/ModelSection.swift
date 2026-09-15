@@ -177,7 +177,7 @@ private struct FamilyGroup<Row: View>: View {
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
                 .fill(Color.white.opacity(0.03))
         )
         .animation(.easeInOut(duration: 0.18), value: isExpanded)
@@ -305,11 +305,11 @@ private struct ModelRow: View {
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
                 .fill(isSelected ? Color.white.opacity(0.09) : Color.white.opacity(0.04))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(
+                    ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                        .stroke(
                             isSelected ? Color.accentColor.opacity(0.35) : Color.white.opacity(0.07),
                             lineWidth: 1
                         )
@@ -325,11 +325,11 @@ private struct ModelRow: View {
     @ViewBuilder
     private var selectionIndicator: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
+            ConcentricRectangle(corners: .concentric(minimum: 5), isUniform: true)
                 .fill(isSelected ? Color.accentColor.opacity(0.25) : Color.white.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(
+                    ConcentricRectangle(corners: .concentric(minimum: 5), isUniform: true)
+                        .stroke(
                             isSelected ? Color.accentColor : Color.white.opacity(0.12),
                             lineWidth: 1
                         )

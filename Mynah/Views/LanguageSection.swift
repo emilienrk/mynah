@@ -73,11 +73,11 @@ struct LanguageSection: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
                     .fill(Color.white.opacity(0.07))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                        ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     )
             )
             }
@@ -139,11 +139,11 @@ private struct LanguageRow: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
                     .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(
+                        ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                            .stroke(
                                 isSelected ? Color.accentColor.opacity(0.3) : Color.clear,
                                 lineWidth: 1
                             )

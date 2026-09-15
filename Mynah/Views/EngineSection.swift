@@ -95,11 +95,11 @@ struct EngineSection: View {
                         .padding(6)
                         .frame(height: 70)
                         .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
                                 .fill(Color.white.opacity(0.06))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                                    ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                                 )
                         )
                         .overlay(alignment: .topLeading) {
@@ -361,7 +361,7 @@ private struct EngineSliderRow: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(Color.accentColor.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(ConcentricRectangle(corners: .concentric(minimum: 6), isUniform: true))
             }
 
             if let step = step {

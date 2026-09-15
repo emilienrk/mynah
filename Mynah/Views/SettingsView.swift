@@ -56,6 +56,21 @@ struct NativeSettingsView: View {
         }
         // Force the window to stay at a consistent size across tabs
         .frame(width: 560, height: 520)
+        .background(
+            ZStack {
+                Color(nsColor: .windowBackgroundColor)
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.02),
+                        Color.clear,
+                        Color.black.opacity(0.12)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .ignoresSafeArea()
+        )
         .preferredColorScheme(.dark)
     }
 }

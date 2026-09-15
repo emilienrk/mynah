@@ -16,12 +16,27 @@ struct SettingsCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.075), Color.white.opacity(0.04)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.18), Color.white.opacity(0.06)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
                     )
+                    .shadow(color: Color.black.opacity(0.18), radius: 8, x: 0, y: 3)
             )
+            .containerShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
@@ -33,15 +48,23 @@ struct SectionHeader: View {
     let title: LocalizedStringKey
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 9) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 22, height: 22)
+                .background(Color.accentColor.opacity(0.16))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.accentColor.opacity(0.28), lineWidth: 1)
+                )
+
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.white.opacity(0.75))
                 .textCase(.uppercase)
-                .kerning(0.5)
+                .kerning(0.6)
         }
     }
 }

@@ -204,20 +204,25 @@ struct SettingsToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.6))
-                .frame(width: 20)
-                .padding(.top, 1)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.white.opacity(0.8))
+                .frame(width: 28, height: 28)
+                .background(Color.white.opacity(0.06))
+                .clipShape(ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true))
+                .overlay(
+                    ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(.white.opacity(0.92))
                 Text(description)
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.white.opacity(0.4))
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -248,7 +253,7 @@ private struct ModeRow: View {
                 ZStack {
                     Circle()
                         .strokeBorder(
-                            isSelected ? Color.accentColor : Color.white.opacity(0.2),
+                            isSelected ? Color.accentColor : Color.white.opacity(0.25),
                             lineWidth: 1.5
                         )
                         .frame(width: 18, height: 18)
@@ -256,21 +261,48 @@ private struct ModeRow: View {
                         Circle()
                             .fill(Color.accentColor)
                             .frame(width: 10, height: 10)
+                            .shadow(color: Color.accentColor.opacity(0.7), radius: 4)
                     }
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(mode.displayName)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+                        .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                        .foregroundStyle(isSelected ? .white : .white.opacity(0.65))
                     Text(mode == .pushToTalk
                          ? "Maintenez la touche — relâchez pour transcrire"
                          : "Un appui pour démarrer, un appui pour arrêter")
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
+                        .foregroundStyle(.white.opacity(0.38))
                 }
                 Spacer()
             }
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                    .fill(
+                        isSelected
+                        ? LinearGradient(
+                            colors: [Color.accentColor.opacity(0.18), Color.accentColor.opacity(0.07)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        : LinearGradient(colors: [Color.clear, Color.clear], startPoint: .top, endPoint: .bottom)
+                    )
+                    .overlay(
+                        ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
+                            .stroke(
+                                isSelected
+                                ? LinearGradient(
+                                    colors: [Color.accentColor.opacity(0.6), Color.accentColor.opacity(0.25)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                : LinearGradient(colors: [Color.clear, Color.clear], startPoint: .top, endPoint: .bottom),
+                                lineWidth: 1
+                            )
+                    )
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -295,20 +327,41 @@ struct HotKeyRecorder: View {
                     Circle()
                         .fill(.red)
                         .frame(width: 7, height: 7)
-                        .opacity(0.9)
+                        .shadow(color: .red.opacity(0.8), radius: 4)
                     Text("Appuyez sur une touche…")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.9))
                 } else {
                     Text(hotKey.displayString)
-                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                     Image(systemName: "pencil")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.3))
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.4))
                 }
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
+                    .fill(
+                        isRecording
+                        ? LinearGradient(colors: [Color.red.opacity(0.25), Color.red.opacity(0.12)], startPoint: .top, endPoint: .bottom)
+                        : LinearGradient(colors: [Color.white.opacity(0.14), Color.white.opacity(0.07)], startPoint: .top, endPoint: .bottom)
+                    )
+                    .overlay(
+                        ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
+                            .stroke(
+                                isRecording
+                                ? LinearGradient(colors: [Color.red.opacity(0.7), Color.red.opacity(0.3)], startPoint: .top, endPoint: .bottom)
+                                : LinearGradient(colors: [Color.white.opacity(0.25), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1.5)
+            )
         }
+        .buttonStyle(.plain)
         .onDisappear { stopRecording() }
     }
 

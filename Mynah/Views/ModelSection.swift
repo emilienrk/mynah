@@ -14,6 +14,7 @@ struct ModelSection: View {
     @State private var expandedFamilies: Set<String> = []
 
     private let families = WhisperModelDescriptor.families
+    private let physicalMemory = ProcessInfo.processInfo.physicalMemory
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -69,6 +70,7 @@ struct ModelSection: View {
             model: model,
             downloadState: manager.state(for: model),
             isSelected: settings.selectedModelFilename == model.filename,
+            isHeavy: model.isHeavy(forPhysicalMemory: physicalMemory),
             isFavorite: settings.isFavorite(filename: model.filename),
             canFavorite: settings.favoritedModelFilenames.count < AppSettings.maxFavorites
                       || settings.isFavorite(filename: model.filename),
@@ -224,6 +226,7 @@ private struct ModelRow: View {
     let model: WhisperModelDescriptor
     let downloadState: ModelDownloadState
     let isSelected: Bool
+    let isHeavy: Bool
     let isFavorite: Bool
     let canFavorite: Bool
     let onSelect:        () -> Void
@@ -280,6 +283,18 @@ private struct ModelRow: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
+
+            if isHeavy {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text("Lourd pour ce Mac (\(Int(ProcessInfo.processInfo.physicalMemory >> 30)) Go de RAM) : risque de ralentissements.")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.orange.opacity(0.8))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 10)
+            }
 
             // Inline progress bar
             if case .downloading(let progress) = downloadState {

@@ -2486,6 +2486,39 @@
           }
         }
       }
+    },
+    "plus précis, plus lent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "more accurate, slower"
+          }
+        }
+      }
+    },
+    "plus léger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "lighter"
+          }
+        }
+      }
+    },
+    "Lourd pour ce Mac (%lld Go de RAM) : risque de ralentissements.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heavy for this Mac (%lld GB of RAM): may slow it down."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

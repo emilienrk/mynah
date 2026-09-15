@@ -11,9 +11,9 @@ struct WhisperModelFamilyTests {
             WhisperModelDescriptor.catalog.first { $0.name == name }!.familyName
         }
 
-        #expect(family("tiny") == "tiny")
-        #expect(family("tiny-q5_1") == "tiny")
-        #expect(family("tiny.en-q8_0") == "tiny")
+        #expect(family("base") == "base")
+        #expect(family("base-q5_1") == "base")
+        #expect(family("base.en-q8_0") == "base")
         #expect(family("large-v3-turbo-q5_0") == "large-v3-turbo")
         #expect(family("large-v2-q5_0") == "large-v2")
         #expect(family("large-v1") == "large-v1")
@@ -30,7 +30,7 @@ struct WhisperModelFamilyTests {
     @Test("Families keep catalog order, English-only variants last within each")
     func familyOrdering() {
         let names = WhisperModelDescriptor.families.map(\.name)
-        #expect(names.first == "tiny")
+        #expect(names.first == "base")
         #expect(names.last == "large-v3-turbo")
         #expect(names.count == Set(names).count)
 

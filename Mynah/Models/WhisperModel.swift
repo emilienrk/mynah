@@ -115,7 +115,7 @@ struct WhisperModelDescriptor: Identifiable, Hashable, Sendable {
     var fileSize: String { sizeInfoParts.fileSize }
 
     /// Base model this descriptor is a variant of — quantization suffix and the
-    /// English-only marker stripped, so `tiny.en-q5_1` folds into `tiny`.
+    /// English-only marker stripped, so `base.en-q5_1` folds into `base`.
     var familyName: String {
         var base = name
         if let quantSuffix = base.range(of: #"-q\d_\d$"#, options: .regularExpression) {
@@ -126,12 +126,6 @@ struct WhisperModelDescriptor: Identifiable, Hashable, Sendable {
     }
 
     static let catalog: [WhisperModelDescriptor] = [
-        .init(name: "tiny",           sizeInfo: "F16 · 75 MiB",    ggmlFile: "ggml-tiny.bin",               englishOnly: false),
-        .init(name: "tiny-q5_1",      sizeInfo: "Q5_1 · 31 MiB",   ggmlFile: "ggml-tiny-q5_1.bin",          englishOnly: false),
-        .init(name: "tiny-q8_0",      sizeInfo: "Q8_0 · 42 MiB",   ggmlFile: "ggml-tiny-q8_0.bin",          englishOnly: false),
-        .init(name: "tiny.en",        sizeInfo: "F16 · 75 MiB",    ggmlFile: "ggml-tiny.en.bin",             englishOnly: true),
-        .init(name: "tiny.en-q5_1",   sizeInfo: "Q5_1 · 31 MiB",   ggmlFile: "ggml-tiny.en-q5_1.bin",       englishOnly: true),
-        .init(name: "tiny.en-q8_0",   sizeInfo: "Q8_0 · 42 MiB",   ggmlFile: "ggml-tiny.en-q8_0.bin",       englishOnly: true),
         .init(name: "base",           sizeInfo: "F16 · 142 MiB",   ggmlFile: "ggml-base.bin",               englishOnly: false),
         .init(name: "base-q5_1",      sizeInfo: "Q5_1 · 57 MiB",   ggmlFile: "ggml-base-q5_1.bin",          englishOnly: false),
         .init(name: "base-q8_0",      sizeInfo: "Q8_0 · 78 MiB",   ggmlFile: "ggml-base-q8_0.bin",          englishOnly: false),
@@ -165,15 +159,8 @@ struct WhisperModelDescriptor: Identifiable, Hashable, Sendable {
         catalog.first { $0.name == "base" }!
     }
 
-    /// Best quality-per-second of the catalog: turbo is only weaker at
-    /// translation, which Mynah never does (`params.translate = false`).
-    static var onboardingDefault: WhisperModelDescriptor {
-        catalog.first { $0.name == "large-v3-turbo-q5_0" }!
-    }
-
-    /// Offered as a way out on slow connections.
-    static var onboardingLight: WhisperModelDescriptor {
-        catalog.first { $0.name == "base-q5_1" }!
+    static func named(_ name: String) -> WhisperModelDescriptor {
+        catalog.first { $0.name == name }!
     }
 
     /// Silero VAD model required by the whisper.cpp VAD filter.
@@ -187,10 +174,56 @@ struct WhisperModelDescriptor: Identifiable, Hashable, Sendable {
     )
 }
 
+// MARK: - Hardware fit
+
+extension WhisperModelDescriptor {
+    /// Parsed from `fileSize`; nil for sizes that don't read "<number> MiB|GiB".
+    var fileSizeBytes: UInt64? {
+        let parts = fileSize.trimmingCharacters(in: CharacterSet(charactersIn: "~")).split(separator: " ")
+        guard parts.count == 2, let value = Double(parts[0]) else { return nil }
+        switch parts[1] {
+        case "MiB": return UInt64(value * Double(1 << 20))
+        case "GiB": return UInt64(value * Double(1 << 30))
+        default:    return nil
+        }
+    }
+
+    /// A loaded model takes more RAM than its file (large-v3: 2.9 GiB on disk, ~3.9 GB
+    /// resident). Past a quarter of the Mac's memory, an 8 GB machine starts swapping.
+    func isHeavy(forPhysicalMemory memory: UInt64) -> Bool {
+        guard let bytes = fileSizeBytes else { return false }
+        return bytes > memory / 4
+    }
+
+    /// Onboarding picks, best first. 16 GB and up can afford unquantized weights;
+    /// below that, turbo-q5_0 keeps most of large-v3's accuracy in a fifth of the size.
+    /// Turbo is only weaker at translation, which Mynah never does.
+    static func onboardingChoices(physicalMemory: UInt64) -> [OnboardingModelChoice] {
+        if physicalMemory >= 16 << 30 {
+            return [
+                OnboardingModelChoice(model: named("large-v3-turbo"), tag: "recommandé"),
+                OnboardingModelChoice(model: named("large-v3"), tag: "plus précis, plus lent"),
+                OnboardingModelChoice(model: named("large-v3-turbo-q5_0"), tag: "plus léger"),
+            ]
+        }
+        return [
+            OnboardingModelChoice(model: named("large-v3-turbo-q5_0"), tag: "recommandé"),
+            OnboardingModelChoice(model: named("small-q5_1"), tag: "plus léger"),
+        ]
+    }
+}
+
+struct OnboardingModelChoice: Identifiable {
+    let model: WhisperModelDescriptor
+    let tag: LocalizedStringResource
+
+    var id: String { model.id }
+}
+
 // MARK: - Model family
 
-/// A base model and its quantizations, so the settings list shows 8 rows
-/// instead of 33. Multilingual variants come before the English-only ones.
+/// A base model and its quantizations, so the settings list shows 7 rows
+/// instead of 27. Multilingual variants come before the English-only ones.
 struct WhisperModelFamily: Identifiable, Sendable {
     let name: String
     let variants: [WhisperModelDescriptor]

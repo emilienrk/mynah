@@ -166,8 +166,9 @@ struct OnboardingView: View {
             subtitle: "Le modèle tourne sur votre Mac. Le téléchargement n'a lieu qu'une fois."
         ) {
             VStack(spacing: 12) {
-                modelRow(WhisperModelDescriptor.onboardingDefault, recommended: true)
-                modelRow(WhisperModelDescriptor.onboardingLight, recommended: false)
+                ForEach(modelChoices) { choice in
+                    modelRow(choice)
+                }
             }
             .onAppear {
                 autoSelectInstalledModelIfNeeded()
@@ -528,7 +529,12 @@ struct OnboardingView: View {
         .font(.system(size: 12, weight: .medium))
     }
 
-    private func modelRow(_ model: WhisperModelDescriptor, recommended: Bool) -> some View {
+    private var modelChoices: [OnboardingModelChoice] {
+        WhisperModelDescriptor.onboardingChoices(physicalMemory: ProcessInfo.processInfo.physicalMemory)
+    }
+
+    private func modelRow(_ choice: OnboardingModelChoice) -> some View {
+        let model = choice.model
         let state = ModelManager.shared.state(for: model)
         let isDownloaded = state == .done
         let isSelected = isDownloaded && services.settings.selectedModelFilename == model.filename
@@ -539,11 +545,9 @@ struct OnboardingView: View {
                     Text(model.name)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white.opacity(0.85))
-                    if recommended {
-                        Text("recommandé")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.45))
-                    }
+                    Text(choice.tag)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.45))
                 }
                 Text(model.sizeInfo)
                     .font(.system(size: 11))
@@ -639,10 +643,8 @@ struct OnboardingView: View {
 
     private func autoSelectInstalledModelIfNeeded() {
         guard services.settings.selectedModelDescriptor?.isDownloaded != true else { return }
-        if ModelManager.shared.isInstalled(WhisperModelDescriptor.onboardingDefault) {
-            select(WhisperModelDescriptor.onboardingDefault)
-        } else if ModelManager.shared.isInstalled(WhisperModelDescriptor.onboardingLight) {
-            select(WhisperModelDescriptor.onboardingLight)
+        if let installed = modelChoices.first(where: { ModelManager.shared.isInstalled($0.model) }) {
+            select(installed.model)
         }
     }
 

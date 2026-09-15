@@ -26,11 +26,13 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD:whisper.cpp)" >> "$GITHUB_OUTPUT"
 
       # Compiling whisper.cpp takes minutes and only changes when the submodule moves.
+      # CMakeCache.txt stores absolute paths, so the workspace is part of the key:
+      # renaming the repo moved it and the restored cache refused to configure.
       - name: Cache whisper.cpp build
         uses: actions/cache@v4
         with:
           path: build-whisper
-          key: whisper-${{ runner.os }}-${{ steps.whisper.outputs.sha }}-${{ hashFiles('build-whisper.sh') }}
+          key: whisper-${{ runner.os }}-${{ steps.whisper.outputs.sha }}-${{ hashFiles('build-whisper.sh') }}-${{ github.workspace }}
 
       - name: Install XcodeGen
         run: brew install xcodegen

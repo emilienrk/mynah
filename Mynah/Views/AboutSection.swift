@@ -144,7 +144,7 @@ struct AboutSection: View {
         }
     }
 
-    private func bullet(_ text: String) -> some View {
+    private func bullet(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 6) {
             Text(verbatim: "•")
             Text(text)

@@ -221,6 +221,17 @@
         }
       }
     },
+    "Copié !": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied!"
+          }
+        }
+      }
+    },
     "Copier le prompt": {
       "extractionState": "manual",
       "localizations": {
@@ -525,6 +536,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favorite Models"
+          }
+        }
+      }
+    },
+    "Modèle actif": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active Model"
+          }
+        }
+      }
+    },
+    "Modèles installés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed Models"
+          }
+        }
+      }
+    },
+    "Gérer les modèles…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage Models…"
           }
         }
       }
@@ -1541,7 +1585,7 @@
         }
       }
     },
-    "Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écris donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme tu veux la sortie. Vide = désactivé.": {
+    "Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écrivez donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme vous souhaitez la sortie. Vide = désactivé.": {
       "extractionState": "manual",
       "localizations": {
         "en": {

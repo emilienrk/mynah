@@ -38,10 +38,6 @@ struct GeneralSection: View {
                             hotkeyManager: hotkeyManager
                         )
                     }
-
-                    Text("Fonctionne même quand Mynah est en arrière-plan. La touche choisie est interceptée avant macOS : binder la touche Dictée remplace la dictée Apple.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.3))
                 }
             }
 

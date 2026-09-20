@@ -43,28 +43,19 @@ struct SettingsCard<Content: View>: View {
 // MARK: - Section header
 
 struct SectionHeader: View {
-    let icon: String
-    // LocalizedStringKey, not String: Text(String) skips the string catalog.
+    var icon: String? = nil
     let title: LocalizedStringKey
 
-    var body: some View {
-        HStack(spacing: 9) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 22, height: 22)
-                .background(Color.accentColor.opacity(0.16))
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(Color.accentColor.opacity(0.28), lineWidth: 1)
-                )
+    init(icon: String? = nil, title: LocalizedStringKey) {
+        self.icon = icon
+        self.title = title
+    }
 
-            Text(title)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white.opacity(0.75))
-                .textCase(.uppercase)
-                .kerning(0.6)
-        }
+    var body: some View {
+        Text(title)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.white.opacity(0.45))
+            .textCase(.uppercase)
+            .kerning(0.6)
     }
 }

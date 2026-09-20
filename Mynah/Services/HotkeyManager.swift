@@ -121,7 +121,7 @@ enum HotKeyMode: String, Codable, CaseIterable, Sendable {
 /// INVARIANT: only mutated on the MainActor while the tap is stopped.
 private struct TapSharedState {
     var hotKey: HotKey       = .defaultHotKey
-    var mode: HotKeyMode     = .pushToTalk
+    var mode: HotKeyMode     = .toggle
     var isToggledOn: Bool    = false
     /// True between hotkey keyDown and release — ensures anti-blocking keyUp is only consumed during active press.
     var isKeyEngaged: Bool   = false

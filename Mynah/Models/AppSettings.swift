@@ -29,7 +29,7 @@ final class AppSettings {
         }
         hotKeyCode             = (ud.integer(forKey: "hotKeyCode").nonZero) ?? 176
         hotKeyModifiers        = (ud.object(forKey: "hotKeyModifiers") as? Int) ?? 0
-        _hotKeyModeRaw         = ud.string(forKey: "hotKeyMode") ?? HotKeyMode.pushToTalk.rawValue
+        _hotKeyModeRaw         = ud.string(forKey: "hotKeyMode") ?? HotKeyMode.toggle.rawValue
         selectedModelFilename  = ud.string(forKey: "selectedModel") ?? "ggml-base.bin"
         languageCode           = ud.string(forKey: "language") ?? "auto"
         _autoPasteEnabled      = (ud.object(forKey: "autoPaste") as? Bool) ?? true
@@ -39,7 +39,7 @@ final class AppSettings {
         // System Settings > Login Items.
         _launchAtLogin         = SMAppService.mainApp.status == .enabled
         ud.removeObject(forKey: "launchAtLogin")
-        _confirmationSound     = (ud.object(forKey: "confirmationSound") as? Bool) ?? false
+        _confirmationSound     = (ud.object(forKey: "confirmationSound") as? Bool) ?? true
         _startSoundName        = ud.string(forKey: "startSoundName") ?? "Tink"
         _finishSoundName       = ud.string(forKey: "finishSoundName") ?? "Pop"
         _pauseMediaWhileRecording = (ud.object(forKey: "pauseMediaWhileRecording") as? Bool) ?? true

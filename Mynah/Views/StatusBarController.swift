@@ -136,8 +136,20 @@ final class StatusBarController: NSObject {
 
         menu.addItem(.separator())
 
-        // ── Favorite models ───────────────────────────────────────────────
+        // ── Model submenu ────────────────────────────────────────────────
+        let currentDescriptor = settings.selectedModelDescriptor
+        let currentModelName = currentDescriptor?.name ?? settings.selectedModelFilename
+        let modelItem = NSMenuItem(
+            title: String(localized: "Modèle") + " : \(currentModelName)",
+            action: nil,
+            keyEquivalent: ""
+        )
+        modelItem.image = NSImage(systemSymbolName: "cube.box", accessibilityDescription: nil)
+
+        let modelSubmenu = NSMenu()
         let favorites = settings.favoritedModelDescriptors.filter { ModelManager.shared.isInstalled($0) }
+        let installed = WhisperModelDescriptor.catalog.filter { ModelManager.shared.isInstalled($0) }
+
         if !favorites.isEmpty {
             let favHeader = NSMenuItem(title: String(localized: "Modèles favoris"), action: nil, keyEquivalent: "")
             favHeader.isEnabled = false
@@ -148,32 +160,57 @@ final class StatusBarController: NSObject {
                     .font: NSFont.systemFont(ofSize: 10, weight: .medium)
                 ]
             )
-            menu.addItem(favHeader)
+            modelSubmenu.addItem(favHeader)
 
             for model in favorites {
-                let isActive = settings.selectedModelFilename == model.filename
-                let item = NSMenuItem(title: "", action: #selector(selectFavoriteModel(_:)), keyEquivalent: "")
-                item.target = self
-                item.representedObject = model.filename
-                item.state = isActive ? .on : .off
-                
-                let style = NSMutableParagraphStyle()
-                let tabStop = NSTextTab(textAlignment: .right, location: 260)
-                style.tabStops = [tabStop]
+                modelSubmenu.addItem(createModelMenuItem(for: model))
+            }
 
-                let attrTitle = NSMutableAttributedString(string: "\(model.name)\t\(model.sizeInfo)", attributes: [
-                    .font: NSFont.systemFont(ofSize: 13),
-                    .paragraphStyle: style
-                ])
-                let sizeRange = (attrTitle.string as NSString).range(of: model.sizeInfo)
-                if sizeRange.location != NSNotFound {
-                    attrTitle.addAttribute(.foregroundColor, value: NSColor.secondaryLabelColor, range: sizeRange)
-                    attrTitle.addAttribute(.font, value: NSFont.systemFont(ofSize: 12), range: sizeRange)
-                }
-                item.attributedTitle = attrTitle
-                menu.addItem(item)
+            if let active = currentDescriptor, !favorites.contains(where: { $0.filename == active.filename }) {
+                modelSubmenu.addItem(.separator())
+                let activeHeader = NSMenuItem(title: String(localized: "Modèle actif"), action: nil, keyEquivalent: "")
+                activeHeader.isEnabled = false
+                activeHeader.attributedTitle = NSAttributedString(
+                    string: activeHeader.title,
+                    attributes: [
+                        .foregroundColor: NSColor.tertiaryLabelColor,
+                        .font: NSFont.systemFont(ofSize: 10, weight: .medium)
+                    ]
+                )
+                modelSubmenu.addItem(activeHeader)
+                modelSubmenu.addItem(createModelMenuItem(for: active))
+            }
+        } else if !installed.isEmpty {
+            let instHeader = NSMenuItem(title: String(localized: "Modèles installés"), action: nil, keyEquivalent: "")
+            instHeader.isEnabled = false
+            instHeader.attributedTitle = NSAttributedString(
+                string: instHeader.title,
+                attributes: [
+                    .foregroundColor: NSColor.tertiaryLabelColor,
+                    .font: NSFont.systemFont(ofSize: 10, weight: .medium)
+                ]
+            )
+            modelSubmenu.addItem(instHeader)
+
+            for model in installed {
+                modelSubmenu.addItem(createModelMenuItem(for: model))
             }
         }
+
+        if !favorites.isEmpty || !installed.isEmpty {
+            modelSubmenu.addItem(.separator())
+        }
+        let manageItem = NSMenuItem(
+            title: String(localized: "Gérer les modèles…"),
+            action: #selector(openModelSettings),
+            keyEquivalent: ""
+        )
+        manageItem.target = self
+        manageItem.image = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: nil)
+        modelSubmenu.addItem(manageItem)
+
+        modelItem.submenu = modelSubmenu
+        menu.addItem(modelItem)
 
         menu.addItem(.separator())
 
@@ -350,6 +387,38 @@ final class StatusBarController: NSObject {
             return
         }
         SettingsWindowController.shared.show(services: servicesContainer, tab: .history)
+    }
+
+    @objc func openModelSettings() {
+        guard settings.hasCompletedOnboarding else {
+            openOnboarding()
+            return
+        }
+        SettingsWindowController.shared.show(services: servicesContainer, tab: .model)
+    }
+
+    private func createModelMenuItem(for model: WhisperModelDescriptor) -> NSMenuItem {
+        let isActive = settings.selectedModelFilename == model.filename
+        let item = NSMenuItem(title: "", action: #selector(selectFavoriteModel(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = model.filename
+        item.state = isActive ? .on : .off
+
+        let style = NSMutableParagraphStyle()
+        let tabStop = NSTextTab(textAlignment: .right, location: 220)
+        style.tabStops = [tabStop]
+
+        let attrTitle = NSMutableAttributedString(string: "\(model.name)\t\(model.sizeInfo)", attributes: [
+            .font: NSFont.systemFont(ofSize: 13),
+            .paragraphStyle: style
+        ])
+        let sizeRange = (attrTitle.string as NSString).range(of: model.sizeInfo)
+        if sizeRange.location != NSNotFound {
+            attrTitle.addAttribute(.foregroundColor, value: NSColor.secondaryLabelColor, range: sizeRange)
+            attrTitle.addAttribute(.font, value: NSFont.systemFont(ofSize: 12), range: sizeRange)
+        }
+        item.attributedTitle = attrTitle
+        return item
     }
 }
 

@@ -114,7 +114,7 @@ struct EngineSection: View {
                         }
 
                     HStack(alignment: .top, spacing: 8) {
-                        Text("Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écris donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme tu veux la sortie. Vide = désactivé.")
+                        Text("Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écrivez donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme vous souhaitez la sortie. Vide = désactivé.")
                             .font(.system(size: 11))
                             .foregroundStyle(.white.opacity(0.3))
                             .fixedSize(horizontal: false, vertical: true)

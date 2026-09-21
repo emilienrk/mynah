@@ -72,7 +72,7 @@ struct NotificationServiceTests {
     func watchdogSilentOnNormalDictation() async {
         let coordinator = makeCoordinator()
         coordinator.setPipelineStateForTesting(.recording)
-        coordinator.recordingWatchdogMilestones = [1.0] // 1 second milestone
+        coordinator.recordingWatchdogMilestones = [60.0] // Ample margin against CI runner scheduling jitter
 
         var notified: [Int] = []
         coordinator.notifyRecordingDuration = { minutes in

@@ -34,8 +34,22 @@ private final class FakeMediaKeySender: MediaKeySender {
 }
 
 @MainActor
+private final class FakePlaybackStateTracker: PlaybackStateTracker {
+    var pausedBundleIDs: Set<String>
+
+    init(paused: Set<String> = []) {
+        self.pausedBundleIDs = paused
+    }
+
+    func isKnownPaused(bundleID: String) -> Bool {
+        pausedBundleIDs.contains(bundleID)
+    }
+}
+
+@MainActor
 private func makeController(
     readings: [[AudioProcess]],
+    tracker: PlaybackStateTracker = FakePlaybackStateTracker(),
     enabled: Bool = true
 ) -> (MediaPlaybackController, FakeProcessProbe, FakeMediaKeySender) {
     let probe = FakeProcessProbe(readings)
@@ -43,11 +57,13 @@ private func makeController(
     let controller = MediaPlaybackController(
         probe: probe,
         keySender: sender,
+        stateTracker: tracker,
         isEnabled: { enabled },
         verifyDelay: .milliseconds(1)
     )
     return (controller, probe, sender)
 }
+
 
 @MainActor
 struct MediaPlaybackControllerTests {
@@ -213,6 +229,38 @@ struct MediaPlaybackControllerTests {
 
         // Second dictation before any resume ran: the media is already paused by
         // us, so the key must stay untouched or it would start the music.
+        controller.pauseForRecording()
+        #expect(controller.didPause == true)
+        #expect(sender.sendCount == 1)
+
+        await controller.resumeAfterRecording()
+        #expect(sender.sendCount == 2)
+    }
+
+    // MARK: - Known paused players
+
+    @Test("A player known to be paused is ignored even if CoreAudio reports lingering output")
+    func knownPausedPlayerSendsNothing() async {
+        let tracker = FakePlaybackStateTracker(paused: ["com.spotify.client"])
+        let (controller, _, sender) = makeController(
+            readings: [[player(10, "com.spotify.client")]],
+            tracker: tracker
+        )
+        controller.pauseForRecording()
+        #expect(controller.didPause == false)
+        #expect(sender.sendCount == 0)
+
+        await controller.resumeAfterRecording()
+        #expect(sender.sendCount == 0)
+    }
+
+    @Test("A known paused player does not prevent another active player from being paused")
+    func knownPausedAlongsideActivePausesActive() async {
+        let tracker = FakePlaybackStateTracker(paused: ["com.spotify.client"])
+        let (controller, _, sender) = makeController(
+            readings: [[player(10, "com.spotify.client"), player(20, "com.google.Chrome")]],
+            tracker: tracker
+        )
         controller.pauseForRecording()
         #expect(controller.didPause == true)
         #expect(sender.sendCount == 1)

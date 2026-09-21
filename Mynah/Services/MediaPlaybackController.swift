@@ -24,6 +24,11 @@ protocol MediaKeySender {
     func sendPlayPause()
 }
 
+@MainActor
+protocol PlaybackStateTracker {
+    func isKnownPaused(bundleID: String) -> Bool
+}
+
 // MARK: - Controller
 
 @MainActor
@@ -31,6 +36,7 @@ final class MediaPlaybackController {
 
     private let probe: AudioProcessProbe
     private let keySender: MediaKeySender
+    private let stateTracker: PlaybackStateTracker
     private let isEnabled: @MainActor () -> Bool
     private let verifyDelay: Duration
 
@@ -44,11 +50,13 @@ final class MediaPlaybackController {
     init(
         probe: AudioProcessProbe,
         keySender: MediaKeySender,
+        stateTracker: PlaybackStateTracker = SystemPlaybackStateTracker(),
         isEnabled: @escaping @MainActor () -> Bool,
         verifyDelay: Duration = .milliseconds(400)
     ) {
         self.probe = probe
         self.keySender = keySender
+        self.stateTracker = stateTracker
         self.isEnabled = isEnabled
         self.verifyDelay = verifyDelay
     }
@@ -67,6 +75,15 @@ final class MediaPlaybackController {
         guard !playing.isEmpty,
               !playing.contains(where: { classify($0) == .communication })
         else { return }
+
+        // Players that explicitly report as paused (e.g. Spotify or Music)
+        // keep their CoreAudio output alive with silence. Skip them so we
+        // don't toggle them into playing.
+        let activePlayers = playing.filter { process in
+            guard let bundleID = process.bundleID else { return true }
+            return !stateTracker.isKnownPaused(bundleID: bundleID)
+        }
+        guard !activePlayers.isEmpty else { return }
 
         let playingBefore = Set(playing.map(\.pid))
         keySender.sendPlayPause()
@@ -140,3 +157,67 @@ struct SystemMediaKeySender: MediaKeySender {
         event.cgEvent?.post(tap: .cghidEventTap)
     }
 }
+
+/// Observes distributed notifications broadcast by Spotify and Apple Music
+/// to track whether they are explicitly paused.
+@MainActor
+final class SystemPlaybackStateTracker: NSObject, PlaybackStateTracker {
+
+    private var pausedBundleIDs: Set<String> = []
+
+    override init() {
+        super.init()
+        let center = DistributedNotificationCenter.default()
+
+        center.addObserver(
+            self,
+            selector: #selector(handleSpotifyNotification(_:)),
+            name: NSNotification.Name("com.spotify.client.PlaybackStateChanged"),
+            object: nil,
+            suspensionBehavior: .deliverImmediately
+        )
+
+        center.addObserver(
+            self,
+            selector: #selector(handleMusicNotification(_:)),
+            name: NSNotification.Name("com.apple.Music.playerInfo"),
+            object: nil,
+            suspensionBehavior: .deliverImmediately
+        )
+    }
+
+    deinit {
+        DistributedNotificationCenter.default().removeObserver(self)
+    }
+
+    @objc nonisolated private func handleSpotifyNotification(_ notification: Notification) {
+        let state = notification.userInfo?["Player State"] as? String
+        Task { @MainActor in
+            self.updateState(state, bundleID: "com.spotify.client")
+        }
+    }
+
+    @objc nonisolated private func handleMusicNotification(_ notification: Notification) {
+        let state = notification.userInfo?["Player State"] as? String
+        Task { @MainActor in
+            self.updateState(state, bundleID: "com.apple.Music")
+        }
+    }
+
+    private func updateState(_ state: String?, bundleID: String) {
+        guard let state else { return }
+        switch state.lowercased() {
+        case "paused", "stopped":
+            pausedBundleIDs.insert(bundleID)
+        case "playing":
+            pausedBundleIDs.remove(bundleID)
+        default:
+            break
+        }
+    }
+
+    func isKnownPaused(bundleID: String) -> Bool {
+        pausedBundleIDs.contains(bundleID)
+    }
+}
+

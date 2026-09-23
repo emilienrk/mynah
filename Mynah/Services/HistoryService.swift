@@ -7,7 +7,7 @@ import Foundation
 import Observation
 import os
 
-private let logger = Logger(subsystem: "com.mynah", category: "HistoryService")
+private let logger = Logger(category: "HistoryService")
 
 @MainActor
 @Observable
@@ -69,7 +69,7 @@ final class HistoryService {
             let decoder = JSONDecoder()
             items = try decoder.decode([HistoryItem].self, from: data)
         } catch {
-            logger.error("Failed to load history: \(error)")
+            logger.error("Failed to load history: \(error, privacy: .public)")
             // The next save would overwrite the file we just failed to read, so
             // put it aside first rather than losing the transcriptions for good.
             archiveCurrentFile(as: "history-unreadable.json")
@@ -84,7 +84,7 @@ final class HistoryService {
             try? fm.removeItem(at: destination)
             try fm.copyItem(at: fileURL, to: destination)
         } catch {
-            logger.error("Failed to archive history: \(error)")
+            logger.error("Failed to archive history: \(error, privacy: .public)")
         }
     }
     
@@ -99,7 +99,7 @@ final class HistoryService {
             
             try data.write(to: fileURL, options: .atomic)
         } catch {
-            logger.error("Failed to save history: \(error)")
+            logger.error("Failed to save history: \(error, privacy: .public)")
         }
     }
 }

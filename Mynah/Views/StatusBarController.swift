@@ -10,7 +10,7 @@ import AppKit
 import SwiftUI
 import os
 
-private let logger = Logger(subsystem: "com.mynah", category: "StatusBar")
+private let logger = Logger(category: "StatusBar")
 
 @MainActor
 final class StatusBarController: NSObject {
@@ -344,7 +344,7 @@ final class StatusBarController: NSObject {
             openOnboarding()
             return
         }
-        logger.debug("triggerRecording() — state: \(String(describing: self.coordinator.pipelineState))")
+        logger.debug("triggerRecording() — state: \(String(describing: self.coordinator.pipelineState), privacy: .public)")
         switch coordinator.pipelineState {
         case .idle:      coordinator.onHotkeyDown()
         case .recording: coordinator.onHotkeyUp()
@@ -360,7 +360,7 @@ final class StatusBarController: NSObject {
         guard let filename = sender.representedObject as? String,
               let descriptor = WhisperModelDescriptor.catalog.first(where: { $0.filename == filename })
         else { return }
-        logger.debug("Selecting favorite model: \(filename)")
+        logger.debug("Selecting favorite model: \(filename, privacy: .public)")
         settings.selectedModelFilename = filename
         coordinator.modelURL = descriptor.localURL
     }

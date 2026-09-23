@@ -74,7 +74,7 @@ final class RecordingCoordinator {
 
     // MARK: Private
 
-    private let logger = Logger(subsystem: "com.mynah", category: "RecordingCoordinator")
+    private let logger = Logger(category: "RecordingCoordinator")
     /// Tracks whether a transcription pipeline is already running.
     private var pipelineTask: Task<Void, Never>?
     /// Tracks a pending model unload task.
@@ -238,7 +238,7 @@ final class RecordingCoordinator {
             return
         }
 
-        logger.info("Transcription OK: \(text.prefix(80))")
+        logger.info("Transcription OK: \(text.prefix(80), privacy: .private)")
 
         // Unload the model after the configured delay.
         unloadModel()
@@ -257,7 +257,7 @@ final class RecordingCoordinator {
 
         if AppSettings.shared.hasCompletedOnboarding {
             let result = await clipboardService.copyAndPaste(text)
-            logger.info("Paste result: \(String(describing: result))")
+            logger.info("Paste result: \(String(describing: result), privacy: .public)")
             
             // Save to history
             historyService.add(text)
@@ -288,7 +288,7 @@ final class RecordingCoordinator {
         stopRecordingWatchdog()
         lastError = message
         pipelineState = .error(message)
-        logger.error("Pipeline error: \(message)")
+        logger.error("Pipeline error: \(message, privacy: .public)")
         Task { await mediaPlayback.resumeAfterRecording() }
         // Auto-reset to idle after a short delay so the UI recovers.
         Task {

@@ -23,7 +23,7 @@ import Foundation
 import os
 import Synchronization
 
-private let logger = Logger(subsystem: "com.mynah", category: "AudioCapture")
+private let logger = Logger(category: "AudioCapture")
 
 enum AudioCaptureError: Error, LocalizedError {
     case permissionDenied
@@ -139,7 +139,7 @@ final class AudioCaptureService {
 
     func startRecording() throws {
         guard state == .idle else {
-            logger.debug("startRecording() skipped — already in state: \(String(describing: self.state))")
+            logger.debug("startRecording() skipped — already in state: \(String(describing: self.state), privacy: .public)")
             return
         }
 
@@ -158,7 +158,7 @@ final class AudioCaptureService {
 
     func stopRecording() -> [Float] {
         guard state == .recording else {
-            logger.debug("stopRecording() skipped — not recording (state=\(String(describing: self.state)))")
+            logger.debug("stopRecording() skipped — not recording (state=\(String(describing: self.state), privacy: .public))")
             return []
         }
 
@@ -170,7 +170,7 @@ final class AudioCaptureService {
         // Drain accumulated samples on the MainActor (safe).
         let captured = accumulator.drainAll()
         state = .idle
-        logger.info("Recording stopped — \(captured.count) samples (\(String(format: "%.2f", Double(captured.count) / 16_000.0))s)")
+        logger.info("Recording stopped — \(captured.count) samples (\(Double(captured.count) / 16_000.0, format: .fixed(precision: 2))s)")
         return captured
     }
 
@@ -182,7 +182,7 @@ final class AudioCaptureService {
         } catch {
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.reset()
-            logger.error("Engine start failed: \(error)")
+            logger.error("Engine start failed: \(error, privacy: .public)")
             throw AudioCaptureError.engineSetupFailed(error.localizedDescription)
         }
 
@@ -237,19 +237,19 @@ final class AudioCaptureService {
         guard state == .recording else { return }
 
         guard restartCount < maxRestarts else {
-            logger.error("Input lost (\(reason)) — restart budget exhausted")
+            logger.error("Input lost (\(reason, privacy: .public)) — restart budget exhausted")
             loseInput()
             return
         }
         restartCount += 1
-        logger.notice("Restarting capture (\(reason)), attempt \(self.restartCount)")
+        logger.notice("Restarting capture (\(reason, privacy: .public)), attempt \(self.restartCount)")
 
         teardownEngine()
         stallDetector.reset()
         do {
             try launchEngine()
         } catch {
-            logger.error("Capture restart failed: \(error)")
+            logger.error("Capture restart failed: \(error, privacy: .public)")
             loseInput()
         }
     }

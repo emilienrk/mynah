@@ -52,7 +52,7 @@ final class ModelManager: NSObject {
         return s
     }
 
-    private let logger = Logger(subsystem: "com.mynah", category: "ModelManager")
+    private let logger = Logger(category: "ModelManager")
 
     // MARK: - Models directory
 
@@ -111,7 +111,7 @@ final class ModelManager: NSObject {
         task.resume()
         activeTasks[model.filename] = task
 
-        logger.info("Download started: \(model.filename)")
+        logger.info("Download started: \(model.filename, privacy: .public)")
     }
 
     /// Cancels an ongoing download.
@@ -120,7 +120,7 @@ final class ModelManager: NSObject {
         activeTasks.removeValue(forKey: model.filename)
         downloadStates[model.filename] = .idle
         clearPublishedPercent(model.filename)
-        logger.info("Download cancelled: \(model.filename)")
+        logger.info("Download cancelled: \(model.filename, privacy: .public)")
     }
 
     /// Deletes a downloaded model file.
@@ -129,7 +129,7 @@ final class ModelManager: NSObject {
         try? FileManager.default.removeItem(at: model.localURL)
         installedFilenames.remove(model.filename)
         downloadStates[model.filename] = .idle
-        logger.info("Model deleted: \(model.filename)")
+        logger.info("Model deleted: \(model.filename, privacy: .public)")
     }
 
     private func clearPublishedPercent(_ filename: String) {
@@ -192,13 +192,13 @@ extension ModelManager: URLSessionDownloadDelegate {
                 self?.installedFilenames.insert(filename)
                 self?.downloadStates[filename] = .done
                 self?.clearPublishedPercent(filename)
-                self?.logger.info("Model installed: \(filename)")
+                self?.logger.info("Model installed: \(filename, privacy: .public)")
             }
         } catch {
             Task { @MainActor [weak self] in
                 self?.downloadStates[filename] = .failed(error.localizedDescription)
                 self?.clearPublishedPercent(filename)
-                self?.logger.error("Install failed for \(filename): \(error)")
+                self?.logger.error("Install failed for \(filename, privacy: .public): \(error, privacy: .public)")
             }
         }
     }
@@ -217,7 +217,7 @@ extension ModelManager: URLSessionDownloadDelegate {
             self?.downloadStates[filename] = .failed(message)
             self?.activeTasks.removeValue(forKey: filename)
             self?.clearPublishedPercent(filename)
-            self?.logger.error("Download failed for \(filename): \(message)")
+            self?.logger.error("Download failed for \(filename, privacy: .public): \(message, privacy: .public)")
         }
     }
 }

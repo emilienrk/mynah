@@ -18,7 +18,7 @@ import ApplicationServices
 import Carbon.HIToolbox
 import os
 
-private let logger = Logger(subsystem: "com.mynah", category: "HotkeyManager")
+private let logger = Logger(category: "HotkeyManager")
 
 // MARK: - Hotkey Models
 

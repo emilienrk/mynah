@@ -8,7 +8,7 @@ import AppKit
 import Foundation
 import os
 
-private let logger = Logger(subsystem: "com.mynah", category: "MicPermission")
+private let logger = Logger(category: "MicPermission")
 
 enum MicrophonePermissionStatus: Equatable {
     case undetermined

@@ -3,6 +3,9 @@
 
 import SwiftUI
 import AVFoundation
+import os
+
+private let logger = Logger(category: "App")
 
 @main
 struct MynahApp: App {
@@ -73,7 +76,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try fm.moveItem(at: old, to: new)
         } catch {
             // Not fatal: a fresh directory is created on demand, models re-download.
-            NSLog("Support directory migration failed: \(error.localizedDescription)")
+            logger.error("Support directory migration failed: \(error, privacy: .public)")
         }
     }
 

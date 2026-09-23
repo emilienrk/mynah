@@ -7,7 +7,7 @@ import Foundation
 import UserNotifications
 import os
 
-private let logger = Logger(subsystem: "com.mynah", category: "NotificationService")
+private let logger = Logger(category: "NotificationService")
 
 @MainActor
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate {

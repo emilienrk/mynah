@@ -104,6 +104,7 @@ targets:
       - path: Mynah/Services/AudioProcessProbe.swift
       - path: Mynah/Services/SystemSoundLibrary.swift
       - path: Mynah/Services/NotificationService.swift
+      - path: Mynah/Services/Logging.swift
       - path: Mynah/Bridge
     settings:
       base:

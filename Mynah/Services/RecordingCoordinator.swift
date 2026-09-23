@@ -100,6 +100,11 @@ final class RecordingCoordinator {
         self.mediaPlayback  = mediaPlayback
 
         configureHotkeyCallbacks()
+        // Ends the dictation with what was captured, rather than letting the
+        // counter run over a mic that is no longer open.
+        audioCapture.onInputLost = { [weak self] in
+            self?.finishRecording()
+        }
         NotificationService.shared.onStopRecordingRequested = { [weak self] in
             guard let self else { return }
             if self.pipelineState == .recording || self.pipelineState == .loadingModel {
@@ -180,6 +185,11 @@ final class RecordingCoordinator {
             return
         }
 
+        // The recording may have ended while the model loaded — key released
+        // early, or the input lost. Going back to .recording would restart the
+        // counter over a closed mic.
+        guard pipelineState == .loadingModel else { return }
+
         // Model is ready; transition to active recording state.
         pipelineState = .recording
         lastRunWasSilent = false
@@ -199,11 +209,18 @@ final class RecordingCoordinator {
         Task { await mediaPlayback.resumeAfterRecording() }
 
         guard !samples.isEmpty else {
-            pipelineState = .idle
             unloadModel()
+            if let captureError = audioCapture.lastError {
+                setError("Micro : \(captureError.localizedDescription)")
+            } else {
+                pipelineState = .idle
+            }
             return
         }
 
+        // Set before the Task runs, so a model load finishing in between sees
+        // the recording is over.
+        pipelineState = .transcribing
         // Run phases 2-4 in a Task to keep the UI responsive.
         Task { await runTranscriptionAndPaste(samples: samples) }
     }

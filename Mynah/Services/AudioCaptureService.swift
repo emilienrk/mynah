@@ -10,6 +10,13 @@
 // - We accumulate samples in a thread-safe box (lock-protected),
 //   then drain into sampleBuffer in stopRecording() on the main actor.
 //   MainActor.assumeIsolated is NEVER called from the realtime thread.
+//
+// ROUTE CHANGES:
+// The engine runs on an input+output aggregate device. Opening the mic of a
+// Bluetooth headset flips it from A2DP to HFP, which changes that device's
+// format mid-recording: the engine stops itself and posts a configuration
+// change. The capture is rebuilt on the new format, keeping the samples
+// already taken, otherwise the mic goes dark while the UI keeps counting.
 
 @preconcurrency import AVFoundation
 import Foundation
@@ -23,6 +30,7 @@ enum AudioCaptureError: Error, LocalizedError {
     case engineSetupFailed(String)
     case converterSetupFailed
     case noInputAvailable
+    case inputLost
 
     var errorDescription: String? {
         switch self {
@@ -30,6 +38,7 @@ enum AudioCaptureError: Error, LocalizedError {
         case .engineSetupFailed(let detail): return "Engine setup failed: \(detail)"
         case .converterSetupFailed: return "Audio converter setup failed."
         case .noInputAvailable: return "No audio input available."
+        case .inputLost: return "Audio input lost during recording."
         }
     }
 }
@@ -71,6 +80,34 @@ final class SamplesAccumulator: Sendable {
     }
 }
 
+/// Spots a capture that died without a configuration change being posted.
+/// Silence still delivers buffers, so a count that stops growing means the tap
+/// is no longer fed — not that the user went quiet.
+struct CaptureStallDetector {
+    /// Consecutive checks without new samples before calling it a stall. Leaves
+    /// a Bluetooth headset the second or two it takes to deliver its first buffer.
+    var toleratedIdleChecks = 2
+
+    private var lastCount: Int?
+    private var idleChecks = 0
+
+    mutating func isStalled(sampleCount: Int, engineRunning: Bool) -> Bool {
+        guard engineRunning else { return true }
+        defer { lastCount = sampleCount }
+        guard sampleCount == lastCount else {
+            idleChecks = 0
+            return false
+        }
+        idleChecks += 1
+        return idleChecks >= toleratedIdleChecks
+    }
+
+    mutating func reset() {
+        lastCount = nil
+        idleChecks = 0
+    }
+}
+
 /// Real-time audio capture service.
 @MainActor
 @Observable
@@ -88,6 +125,18 @@ final class AudioCaptureService {
 
     private let tapBufferSize: AVAudioFrameCount = 4096
 
+    /// Called when the input is gone for good mid-recording; the samples taken
+    /// until then are still returned by stopRecording().
+    var onInputLost: (@MainActor () -> Void)?
+
+    private var configurationObserver: (any NSObjectProtocol)?
+    private var healthCheckTask: Task<Void, Never>?
+    private var stallDetector = CaptureStallDetector()
+    private var restartCount = 0
+    /// A headset switching profiles takes one restart; more than a few means
+    /// the route keeps flapping and retrying would only hide it.
+    private let maxRestarts = 3
+
     func startRecording() throws {
         guard state == .idle else {
             logger.debug("startRecording() skipped — already in state: \(String(describing: self.state))")
@@ -95,20 +144,15 @@ final class AudioCaptureService {
         }
 
         lastError = nil
+        restartCount = 0
+        stallDetector.reset()
         // Drain any leftover samples from a previous session.
         _ = accumulator.drainAll()
 
-        try setupEngine()
-
-        do {
-            try audioEngine.start()
-        } catch {
-            audioEngine.reset()
-            logger.error("Engine start failed: \(error)")
-            throw AudioCaptureError.engineSetupFailed(error.localizedDescription)
-        }
+        try launchEngine()
 
         state = .recording
+        startHealthCheck()
         logger.info("Recording started")
     }
 
@@ -119,15 +163,104 @@ final class AudioCaptureService {
         }
 
         state = .stopping
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
-        audioEngine.reset()
+        healthCheckTask?.cancel()
+        healthCheckTask = nil
+        teardownEngine()
 
         // Drain accumulated samples on the MainActor (safe).
         let captured = accumulator.drainAll()
         state = .idle
         logger.info("Recording stopped — \(captured.count) samples (\(String(format: "%.2f", Double(captured.count) / 16_000.0))s)")
         return captured
+    }
+
+    private func launchEngine() throws {
+        try setupEngine()
+
+        do {
+            try audioEngine.start()
+        } catch {
+            audioEngine.inputNode.removeTap(onBus: 0)
+            audioEngine.reset()
+            logger.error("Engine start failed: \(error)")
+            throw AudioCaptureError.engineSetupFailed(error.localizedDescription)
+        }
+
+        observeConfigurationChanges()
+    }
+
+    private func teardownEngine() {
+        if let configurationObserver {
+            NotificationCenter.default.removeObserver(configurationObserver)
+        }
+        configurationObserver = nil
+        audioEngine.inputNode.removeTap(onBus: 0)
+        audioEngine.stop()
+        audioEngine.reset()
+    }
+
+    private func observeConfigurationChanges() {
+        let engineID = ObjectIdentifier(audioEngine)
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: audioEngine,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                // A notification queued before a restart belongs to the engine
+                // that restart already replaced.
+                guard let self, ObjectIdentifier(self.audioEngine) == engineID else { return }
+                self.restartCapture(reason: "configuration change")
+            }
+        }
+    }
+
+    /// Catches an engine that stopped delivering buffers without posting a
+    /// configuration change.
+    private func startHealthCheck() {
+        healthCheckTask?.cancel()
+        healthCheckTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self, self.state == .recording else { return }
+                if self.stallDetector.isStalled(
+                    sampleCount: self.accumulator.count,
+                    engineRunning: self.audioEngine.isRunning
+                ) {
+                    self.restartCapture(reason: "input stalled")
+                }
+            }
+        }
+    }
+
+    private func restartCapture(reason: String) {
+        guard state == .recording else { return }
+
+        guard restartCount < maxRestarts else {
+            logger.error("Input lost (\(reason)) — restart budget exhausted")
+            loseInput()
+            return
+        }
+        restartCount += 1
+        logger.notice("Restarting capture (\(reason)), attempt \(self.restartCount)")
+
+        teardownEngine()
+        stallDetector.reset()
+        do {
+            try launchEngine()
+        } catch {
+            logger.error("Capture restart failed: \(error)")
+            loseInput()
+        }
+    }
+
+    private func loseInput() {
+        healthCheckTask?.cancel()
+        healthCheckTask = nil
+        teardownEngine()
+        lastError = .inputLost
+        // Stays .recording so stopRecording() still hands back what was captured.
+        onInputLost?()
     }
 
     private func setupEngine() throws {

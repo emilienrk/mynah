@@ -111,6 +111,17 @@
         }
       }
     },
+    "Apparence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
     "Au-delà, whisper.cpp coupe le début du texte.": {
       "extractionState": "manual",
       "localizations": {
@@ -151,6 +162,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No audio input available."
+          }
+        }
+      }
+    },
+    "Automatique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic"
           }
         }
       }
@@ -206,6 +228,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Always chooses the most probable token. Optimal for real-time dictation."
+          }
+        }
+      }
+    },
+    "Clair": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
           }
         }
       }
@@ -745,6 +778,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retry"
+          }
+        }
+      }
+    },
+    "Sombre": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
           }
         }
       }

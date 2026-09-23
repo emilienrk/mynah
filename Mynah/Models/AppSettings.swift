@@ -43,6 +43,7 @@ final class AppSettings {
         _startSoundName        = ud.string(forKey: "startSoundName") ?? "Tink"
         _finishSoundName       = ud.string(forKey: "finishSoundName") ?? "Pop"
         _pauseMediaWhileRecording = (ud.object(forKey: "pauseMediaWhileRecording") as? Bool) ?? true
+        _appearanceRaw         = ud.string(forKey: "appearance") ?? AppAppearance.system.rawValue
         _useBeamSearch         = (ud.object(forKey: "useBeamSearch") as? Bool) ?? false
         _beamSize              = (ud.object(forKey: "beamSize") as? Int) ?? 5
         // Engine knobs dropped in 1.7.1: nothing reads them any more.
@@ -180,6 +181,14 @@ final class AppSettings {
     var pauseMediaWhileRecording: Bool {
         get { _pauseMediaWhileRecording }
         set { _pauseMediaWhileRecording = newValue }
+    }
+
+    private var _appearanceRaw: String {
+        didSet { UserDefaults.standard.set(_appearanceRaw, forKey: "appearance") }
+    }
+    var appearance: AppAppearance {
+        get { AppAppearance(rawValue: _appearanceRaw) ?? .system }
+        set { _appearanceRaw = newValue.rawValue }
     }
 
     private var _hasCompletedOnboarding: Bool {
@@ -330,6 +339,14 @@ final class AppSettings {
             return SMAppService.mainApp.status == .enabled
         }
     }
+}
+
+// MARK: - Appearance
+
+enum AppAppearance: String, CaseIterable, Sendable {
+    case system
+    case light
+    case dark
 }
 
 private extension Int {

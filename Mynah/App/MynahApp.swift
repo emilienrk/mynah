@@ -57,6 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusBar: StatusBarController!
     private var iconTask: Task<Void, Never>?
+    private var appearanceTask: Task<Void, Never>?
 
     // MARK: - Lifecycle
 
@@ -98,6 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Observe pipeline state → update icon.
         observePipelineState()
+        observeAppearance()
 
         // The onboarding asks for the microphone itself, with an explanation
         // shown first — prompting here would fire the system dialog cold.
@@ -141,6 +143,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let coordinator = self.servicesContainer.coordinator
             for await state in Observations({ coordinator.pipelineState }) {
                 self.statusBar.updateIcon(for: state)
+            }
+        }
+    }
+
+    /// Set on NSApp rather than per view, so every window and menu follows,
+    /// the onboarding and the history included.
+    private func observeAppearance() {
+        appearanceTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let settings = self.servicesContainer.settings
+            for await appearance in Observations({ settings.appearance }) {
+                NSApp.appearance = switch appearance {
+                case .system: nil
+                case .light:  NSAppearance(named: .aqua)
+                case .dark:   NSAppearance(named: .darkAqua)
+                }
             }
         }
     }

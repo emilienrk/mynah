@@ -95,6 +95,12 @@ struct GeneralSection: View {
             }
 
             Section {
+                Picker("Apparence", selection: $settings.appearance) {
+                    Text("Automatique").tag(AppAppearance.system)
+                    Text("Clair").tag(AppAppearance.light)
+                    Text("Sombre").tag(AppAppearance.dark)
+                }
+
                 Picker("Langue de l'application", selection: $settings.uiLanguage) {
                     Text(verbatim: "Français").tag("fr")
                     Text(verbatim: "English").tag("en")

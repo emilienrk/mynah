@@ -151,7 +151,7 @@ final class RecordingCoordinator {
     /// Phase 1: start audio capture + load Whisper model in parallel.
     private func startPipeline() async {
         guard let modelURL else {
-            setError("Aucun modèle Whisper sélectionné.")
+            setError(String(localized: "Aucun modèle Whisper sélectionné."))
             return
         }
 
@@ -171,7 +171,7 @@ final class RecordingCoordinator {
         do {
             try audioCapture.startRecording()
         } catch {
-            setError("Micro : \(error.localizedDescription)")
+            setError(String(localized: "Micro : \(error.localizedDescription)"))
             return
         }
 
@@ -181,7 +181,7 @@ final class RecordingCoordinator {
             try await whisperService.loadModel(at: modelURL, language: language, useGPU: AppSettings.shared.useGPU)
         } catch {
             _ = audioCapture.stopRecording()
-            setError("Chargement modèle : \(error.localizedDescription)")
+            setError(String(localized: "Chargement modèle : \(error.localizedDescription)"))
             return
         }
 
@@ -211,7 +211,7 @@ final class RecordingCoordinator {
         guard !samples.isEmpty else {
             unloadModel()
             if let captureError = audioCapture.lastError {
-                setError("Micro : \(captureError.localizedDescription)")
+                setError(String(localized: "Micro : \(captureError.localizedDescription)"))
             } else {
                 pipelineState = .idle
             }
@@ -233,7 +233,7 @@ final class RecordingCoordinator {
         do {
             text = try await whisperService.transcribe(samples: samples, config: engineConfig)
         } catch {
-            setError("Transcription : \(error.localizedDescription)")
+            setError(String(localized: "Transcription : \(error.localizedDescription)"))
             unloadModel()
             return
         }

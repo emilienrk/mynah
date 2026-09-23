@@ -14,10 +14,10 @@ enum WhisperServiceError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .modelNotFound(let path): return "Model not found: \(path)"
-        case .contextInitFailed(let path): return "Failed to init context for: \(path)"
-        case .transcriptionFailed: return "Transcription failed."
-        case .noModelLoaded: return "No model loaded. Call loadModel() first."
+        case .modelNotFound(let path): return String(localized: "Modèle introuvable : \(path)")
+        case .contextInitFailed(let path): return String(localized: "Impossible de charger le modèle : \(path)")
+        case .transcriptionFailed: return String(localized: "La transcription a échoué.")
+        case .noModelLoaded: return String(localized: "Aucun modèle chargé.")
         }
     }
 }

@@ -25,7 +25,6 @@ targets:
       properties:
         LSUIElement: true
         NSMicrophoneUsageDescription: "Mynah a besoin du micro pour la dictée vocale."
-        NSSpeechRecognitionUsageDescription: "Mynah utilise la reconnaissance vocale."
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         SUFeedURL: "https://github.com/emilienrk/mynah/releases/latest/download/appcast.xml"

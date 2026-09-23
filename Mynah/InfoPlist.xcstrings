@@ -1,0 +1,23 @@
+{
+  "sourceLanguage": "fr",
+  "strings": {
+    "NSMicrophoneUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mynah needs the microphone for voice dictation."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mynah a besoin du micro pour la dictée vocale."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

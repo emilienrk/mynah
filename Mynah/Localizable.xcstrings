@@ -56,6 +56,17 @@
         }
       }
     },
+    "Accès au micro refusé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone access denied."
+          }
+        }
+      }
+    },
     "Accélération GPU (Metal)": {
       "extractionState": "manual",
       "localizations": {
@@ -89,46 +100,57 @@
         }
       }
     },
-    "Anglais": {
+    "Ajouter aux favoris": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "English"
+            "value": "Add to favorites"
           }
         }
       }
     },
-    "Aucun historique": {
+    "Au-delà, whisper.cpp coupe le début du texte.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No history"
+            "value": "Beyond this, whisper.cpp cuts the start of the text."
           }
         }
       }
     },
-    "Auto-detect": {
+    "Aucun modèle chargé.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto-detect"
+            "value": "No model loaded."
           }
         }
       }
     },
-    "Autorisé": {
+    "Aucun modèle Whisper sélectionné.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Authorized"
+            "value": "No Whisper model selected."
+          }
+        }
+      }
+    },
+    "Aucune entrée audio disponible.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No audio input available."
           }
         }
       }
@@ -162,6 +184,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Some changes take effect on the next recording."
+          }
+        }
+      }
+    },
+    "Chargement modèle : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model loading: %@"
           }
         }
       }
@@ -232,17 +265,6 @@
         }
       }
     },
-    "Copier le prompt": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy prompt"
-          }
-        }
-      }
-    },
     "Coupe la lecture en cours pendant la dictée, puis la relance.": {
       "extractionState": "manual",
       "localizations": {
@@ -261,17 +283,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Request access"
-          }
-        }
-      }
-    },
-    "Droits": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permissions"
           }
         }
       }
@@ -298,13 +309,24 @@
         }
       }
     },
-    "En cours…": {
+    "Détection automatique": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "In progress…"
+            "value": "Auto-detect"
+          }
+        }
+      }
+    },
+    "Entrée audio perdue pendant l'enregistrement.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio input lost during recording."
           }
         }
       }
@@ -327,17 +349,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Explores multiple paths. Better for proper nouns, technical terms, and mixed languages."
-          }
-        }
-      }
-    },
-    "Français": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "French"
           }
         }
       }
@@ -386,6 +397,28 @@
         }
       }
     },
+    "Impossible de charger le modèle : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not load the model: %@"
+          }
+        }
+      }
+    },
+    "Installé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed"
+          }
+        }
+      }
+    },
     "Insère le texte directement dans l'app active après la transcription.": {
       "extractionState": "manual",
       "localizations": {
@@ -393,6 +426,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inserts text directly into the active app after transcription."
+          }
+        }
+      }
+    },
+    "La transcription a échoué.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription failed."
           }
         }
       }
@@ -463,6 +507,17 @@
         }
       }
     },
+    "Maintenez la touche — relâchez pour transcrire": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold the key — release to transcribe"
+          }
+        }
+      }
+    },
     "Maintenir enfoncé": {
       "extractionState": "manual",
       "localizations": {
@@ -474,6 +529,17 @@
         }
       }
     },
+    "Maximum %lld favoris": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum %lld favorites"
+          }
+        }
+      }
+    },
     "Mettre la musique en pause": {
       "extractionState": "manual",
       "localizations": {
@@ -481,6 +547,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pause music while dictating"
+          }
+        }
+      }
+    },
+    "Micro : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone: %@"
           }
         }
       }
@@ -514,6 +591,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Model"
+          }
+        }
+      }
+    },
+    "Modèle introuvable : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model not found: %@"
           }
         }
       }
@@ -584,28 +672,6 @@
         }
       }
     },
-    "Non demandé": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not requested"
-          }
-        }
-      }
-    },
-    "Ouvrir Mynah": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open Mynah"
-          }
-        }
-      }
-    },
     "Ouvrir les Réglages": {
       "extractionState": "manual",
       "localizations": {
@@ -624,28 +690,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings…"
-          }
-        }
-      }
-    },
-    "Prêt": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ready"
-          }
-        }
-      }
-    },
-    "Push to Talk": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Push to Talk"
           }
         }
       }
@@ -683,13 +727,24 @@
         }
       }
     },
-    "Refusé": {
+    "Retirer des favoris": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Denied"
+            "value": "Remove from favorites"
+          }
+        }
+      }
+    },
+    "Réessayer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
           }
         }
       }
@@ -701,17 +756,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Decoding Strategy"
-          }
-        }
-      }
-    },
-    "Supprimer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
           }
         }
       }
@@ -749,6 +793,17 @@
         }
       }
     },
+    "Supprimer le modèle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete model"
+          }
+        }
+      }
+    },
     "Sur les quatre leviers, deux sont livrés inactifs. Les poser maintenant, c'est autant de gagné dès votre premier essai.": {
       "extractionState": "manual",
       "localizations": {
@@ -767,17 +822,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "System"
-          }
-        }
-      }
-    },
-    "Sélectionner": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Select"
           }
         }
       }
@@ -804,13 +848,24 @@
         }
       }
     },
-    "Toggle": {
+    "Transcription": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toggle"
+            "value": "Transcription"
+          }
+        }
+      }
+    },
+    "Transcription : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription: %@"
           }
         }
       }
@@ -826,17 +881,6 @@
         }
       }
     },
-    "Téléchargement…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Downloading…"
-          }
-        }
-      }
-    },
     "Télécharger": {
       "extractionState": "manual",
       "localizations": {
@@ -848,13 +892,13 @@
         }
       }
     },
-    "Téléchargé": {
+    "Un appui pour démarrer, un appui pour arrêter": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Downloaded"
+            "value": "Press once to start, once to stop"
           }
         }
       }
@@ -870,6 +914,17 @@
         }
       }
     },
+    "Version": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
     "Vider": {
       "extractionState": "manual",
       "localizations": {
@@ -877,17 +932,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clear"
-          }
-        }
-      }
-    },
-    "Vider l'historique": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear history"
           }
         }
       }
@@ -932,28 +976,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Whisper does not follow instructions: it imitates what it reads. Give it an example and it will mirror its vocabulary and punctuation."
-          }
-        }
-      }
-    },
-    "Mynah a besoin du microphone pour la dictée vocale.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mynah needs the microphone for voice dictation."
-          }
-        }
-      }
-    },
-    "Mynah nécessite l'accès à l'Accessibilité pour détecter le raccourci global.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mynah needs Accessibility access to detect the global shortcut."
           }
         }
       }
@@ -1167,28 +1189,6 @@
         }
       }
     },
-    "Collage automatique": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic pasting"
-          }
-        }
-      }
-    },
-    "Avec l'autorisation d'Accessibilité, Mynah colle le texte directement dans l'application active. Sans elle, le texte est copié dans le presse-papier — vous collez avec ⌘V.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "With Accessibility access, Mynah pastes text straight into the active app. Without it, text is copied to the clipboard — paste it with ⌘V."
-          }
-        }
-      }
-    },
     "Accessibilité autorisée": {
       "extractionState": "manual",
       "localizations": {
@@ -1251,28 +1251,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Use"
-          }
-        }
-      }
-    },
-    "Essayez": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try it"
-          }
-        }
-      }
-    },
-    "Maintenez la touche de votre clavier, dites une phrase, puis relâchez. Le texte apparaît ci-dessous.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hold the dictation key on your keyboard, say a sentence, then release. The text appears below."
           }
         }
       }
@@ -1365,6 +1343,28 @@
         }
       }
     },
+    "Échec de la conversion audio.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio conversion failed."
+          }
+        }
+      }
+    },
+    "Échec du démarrage audio : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio failed to start: %@"
+          }
+        }
+      }
+    },
     "Émet un son bref au démarrage de l'enregistrement et quand la transcription est prête.": {
       "extractionState": "manual",
       "localizations": {
@@ -1372,17 +1372,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plays a short sound when recording starts and when the transcription is ready."
-          }
-        }
-      }
-    },
-    "La dictée d'Apple utilise la même touche et joue ses propres bips. Désactivez-la pour laisser la touche à Mynah.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apple dictation uses the same key and plays its own chimes. Turn it off to leave the key to Mynah."
           }
         }
       }
@@ -1420,17 +1409,6 @@
         }
       }
     },
-    "Fonctionne même quand Mynah est en arrière-plan. La touche choisie est interceptée avant macOS : binder la touche Dictée remplace la dictée Apple.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Works even when Mynah is in the background. The chosen key is intercepted before macOS: binding the Dictation key replaces Apple dictation."
-          }
-        }
-      }
-    },
     "Mises à jour": {
       "extractionState": "manual",
       "localizations": {
@@ -1438,28 +1416,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Updates"
-          }
-        }
-      }
-    },
-    "Vérifier…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check…"
-          }
-        }
-      }
-    },
-    "Les mises à jour incluent le moteur whisper.cpp intégré.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Updates include the bundled whisper.cpp engine."
           }
         }
       }

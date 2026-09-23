@@ -22,8 +22,6 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mynah a besoin du micro pour la dictée vocale.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Mynah utilise la reconnaissance vocale.</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>

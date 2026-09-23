@@ -10,72 +10,29 @@ import Foundation
 /// Represents a supported Whisper language.
 struct WhisperLanguage: Identifiable, Hashable, Sendable {
     let id: String
-    let displayName: String
     /// ISO 639-1 code for whisper_full_params.language. `nil` means auto-detect.
     let whisperCode: String?
 
-    static let auto = WhisperLanguage(id: "auto", displayName: "Auto-detect", whisperCode: nil)
+    /// Named by the system in the app's own language, so no catalog entry is
+    /// needed per language.
+    var displayName: String {
+        guard let whisperCode else { return String(localized: "Détection automatique") }
+        let locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
+        guard let name = locale.localizedString(forLanguageCode: whisperCode) else { return whisperCode }
+        return name.prefix(1).capitalized(with: locale) + name.dropFirst()
+    }
 
-    static let all: [WhisperLanguage] = [
-        .auto,
-        WhisperLanguage(id: "af", displayName: "Afrikaans",          whisperCode: "af"),
-        WhisperLanguage(id: "ar", displayName: "Arabe",              whisperCode: "ar"),
-        WhisperLanguage(id: "hy", displayName: "Arménien",           whisperCode: "hy"),
-        WhisperLanguage(id: "az", displayName: "Azerbaïdjanais",     whisperCode: "az"),
-        WhisperLanguage(id: "be", displayName: "Biélorusse",         whisperCode: "be"),
-        WhisperLanguage(id: "bs", displayName: "Bosniaque",          whisperCode: "bs"),
-        WhisperLanguage(id: "bg", displayName: "Bulgare",            whisperCode: "bg"),
-        WhisperLanguage(id: "ca", displayName: "Catalan",            whisperCode: "ca"),
-        WhisperLanguage(id: "zh", displayName: "Chinois",            whisperCode: "zh"),
-        WhisperLanguage(id: "hr", displayName: "Croate",             whisperCode: "hr"),
-        WhisperLanguage(id: "cs", displayName: "Tchèque",            whisperCode: "cs"),
-        WhisperLanguage(id: "da", displayName: "Danois",             whisperCode: "da"),
-        WhisperLanguage(id: "nl", displayName: "Néerlandais",        whisperCode: "nl"),
-        WhisperLanguage(id: "en", displayName: "Anglais",            whisperCode: "en"),
-        WhisperLanguage(id: "et", displayName: "Estonien",           whisperCode: "et"),
-        WhisperLanguage(id: "fi", displayName: "Finnois",            whisperCode: "fi"),
-        WhisperLanguage(id: "fr", displayName: "Français",           whisperCode: "fr"),
-        WhisperLanguage(id: "gl", displayName: "Galicien",           whisperCode: "gl"),
-        WhisperLanguage(id: "de", displayName: "Allemand",           whisperCode: "de"),
-        WhisperLanguage(id: "el", displayName: "Grec",               whisperCode: "el"),
-        WhisperLanguage(id: "he", displayName: "Hébreu",             whisperCode: "he"),
-        WhisperLanguage(id: "hi", displayName: "Hindi",              whisperCode: "hi"),
-        WhisperLanguage(id: "hu", displayName: "Hongrois",           whisperCode: "hu"),
-        WhisperLanguage(id: "is", displayName: "Islandais",          whisperCode: "is"),
-        WhisperLanguage(id: "id", displayName: "Indonésien",         whisperCode: "id"),
-        WhisperLanguage(id: "it", displayName: "Italien",            whisperCode: "it"),
-        WhisperLanguage(id: "ja", displayName: "Japonais",           whisperCode: "ja"),
-        WhisperLanguage(id: "kn", displayName: "Kannada",            whisperCode: "kn"),
-        WhisperLanguage(id: "kk", displayName: "Kazakh",             whisperCode: "kk"),
-        WhisperLanguage(id: "ko", displayName: "Coréen",             whisperCode: "ko"),
-        WhisperLanguage(id: "lv", displayName: "Letton",             whisperCode: "lv"),
-        WhisperLanguage(id: "lt", displayName: "Lituanien",          whisperCode: "lt"),
-        WhisperLanguage(id: "mk", displayName: "Macédonien",         whisperCode: "mk"),
-        WhisperLanguage(id: "ms", displayName: "Malais",             whisperCode: "ms"),
-        WhisperLanguage(id: "mi", displayName: "Maori",              whisperCode: "mi"),
-        WhisperLanguage(id: "mr", displayName: "Marathi",            whisperCode: "mr"),
-        WhisperLanguage(id: "ne", displayName: "Népalais",           whisperCode: "ne"),
-        WhisperLanguage(id: "no", displayName: "Norvégien",          whisperCode: "no"),
-        WhisperLanguage(id: "fa", displayName: "Persan",             whisperCode: "fa"),
-        WhisperLanguage(id: "pl", displayName: "Polonais",           whisperCode: "pl"),
-        WhisperLanguage(id: "pt", displayName: "Portugais",          whisperCode: "pt"),
-        WhisperLanguage(id: "ro", displayName: "Roumain",            whisperCode: "ro"),
-        WhisperLanguage(id: "ru", displayName: "Russe",              whisperCode: "ru"),
-        WhisperLanguage(id: "sr", displayName: "Serbe",              whisperCode: "sr"),
-        WhisperLanguage(id: "sk", displayName: "Slovaque",           whisperCode: "sk"),
-        WhisperLanguage(id: "sl", displayName: "Slovène",            whisperCode: "sl"),
-        WhisperLanguage(id: "es", displayName: "Espagnol",           whisperCode: "es"),
-        WhisperLanguage(id: "sw", displayName: "Swahili",            whisperCode: "sw"),
-        WhisperLanguage(id: "sv", displayName: "Suédois",            whisperCode: "sv"),
-        WhisperLanguage(id: "tl", displayName: "Tagalog",            whisperCode: "tl"),
-        WhisperLanguage(id: "ta", displayName: "Tamoul",             whisperCode: "ta"),
-        WhisperLanguage(id: "th", displayName: "Thaï",               whisperCode: "th"),
-        WhisperLanguage(id: "tr", displayName: "Turc",               whisperCode: "tr"),
-        WhisperLanguage(id: "uk", displayName: "Ukrainien",          whisperCode: "uk"),
-        WhisperLanguage(id: "ur", displayName: "Ourdou",             whisperCode: "ur"),
-        WhisperLanguage(id: "vi", displayName: "Vietnamien",         whisperCode: "vi"),
-        WhisperLanguage(id: "cy", displayName: "Gallois",            whisperCode: "cy"),
+    static let auto = WhisperLanguage(id: "auto", whisperCode: nil)
+
+    static let all: [WhisperLanguage] = [.auto] + [
+        "af", "ar", "hy", "az", "be", "bs", "bg", "ca", "zh", "hr", "cs", "da",
+        "nl", "en", "et", "fi", "fr", "gl", "de", "el", "he", "hi", "hu", "is",
+        "id", "it", "ja", "kn", "kk", "ko", "lv", "lt", "mk", "ms", "mi", "mr",
+        "ne", "no", "fa", "pl", "pt", "ro", "ru", "sr", "sk", "sl", "es", "sw",
+        "sv", "tl", "ta", "th", "tr", "uk", "ur", "vi", "cy",
     ]
+    .map { WhisperLanguage(id: $0, whisperCode: $0) }
+    .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
 
     static func find(byCode code: String) -> WhisperLanguage {
         all.first { $0.id == code } ?? .auto

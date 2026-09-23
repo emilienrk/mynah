@@ -34,11 +34,11 @@ enum AudioCaptureError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .permissionDenied: return "Microphone access denied."
-        case .engineSetupFailed(let detail): return "Engine setup failed: \(detail)"
-        case .converterSetupFailed: return "Audio converter setup failed."
-        case .noInputAvailable: return "No audio input available."
-        case .inputLost: return "Audio input lost during recording."
+        case .permissionDenied: return String(localized: "Accès au micro refusé.")
+        case .engineSetupFailed(let detail): return String(localized: "Échec du démarrage audio : \(detail)")
+        case .converterSetupFailed: return String(localized: "Échec de la conversion audio.")
+        case .noInputAvailable: return String(localized: "Aucune entrée audio disponible.")
+        case .inputLost: return String(localized: "Entrée audio perdue pendant l'enregistrement.")
         }
     }
 }

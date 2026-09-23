@@ -5,7 +5,6 @@
 // Each tab maps to an existing section view — no content changes needed.
 
 import SwiftUI
-import AppKit
 
 // MARK: - NativeSettingsView
 
@@ -18,13 +17,10 @@ struct NativeSettingsView: View {
         Group {
             switch tabSelection.currentTab {
             case .general:
-                ScrollView {
-                    GeneralSection(
-                        settings: services.settings,
-                        hotkeyManager: services.hotkeyManager
-                    )
-                    .padding(20)
-                }
+                GeneralSection(
+                    settings: services.settings,
+                    hotkeyManager: services.hotkeyManager
+                )
             case .model:
                 ModelSection(
                     settings: services.settings,
@@ -33,45 +29,17 @@ struct NativeSettingsView: View {
             case .language:
                 LanguageSection(settings: services.settings)
             case .engine:
-                ScrollView {
-                    EngineSection(settings: services.settings)
-                        .padding(20)
-                }
+                EngineSection(settings: services.settings)
             case .permissions:
-                ScrollView {
-                    PermissionsSection(micManager: services.micPermManager)
-                        .padding(20)
-                }
+                PermissionsSection(micManager: services.micPermManager)
             case .history:
-                ScrollView {
-                    HistoryView(historyService: services.historyService)
-                        .padding(20)
-                }
+                HistoryView(historyService: services.historyService)
             case .about:
-                ScrollView {
-                    AboutSection()
-                        .padding(20)
-                }
+                AboutSection()
             }
         }
         // Force the window to stay at a consistent size across tabs
         .frame(width: 560, height: 520)
-        .background(
-            ZStack {
-                Color(nsColor: .windowBackgroundColor)
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.02),
-                        Color.clear,
-                        Color.black.opacity(0.12)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .ignoresSafeArea()
-        )
-        .preferredColorScheme(.dark)
     }
 }
 
@@ -103,24 +71,5 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .history: return "clock.fill"
         case .about: return "info.circle.fill"
         }
-    }
-}
-
-// MARK: - NSVisualEffectView wrapper (kept for potential reuse)
-
-struct VisualEffectView: NSViewRepresentable {
-    var material: NSVisualEffectView.Material
-    var blendingMode: NSVisualEffectView.BlendingMode
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let v = NSVisualEffectView()
-        v.material = material
-        v.blendingMode = blendingMode
-        v.state = .active
-        return v
-    }
-    func updateNSView(_ v: NSVisualEffectView, context: Context) {
-        v.material = material
-        v.blendingMode = blendingMode
     }
 }

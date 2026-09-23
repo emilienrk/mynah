@@ -9,200 +9,151 @@ struct EngineSection: View {
     @Bindable var settings: AppSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        Form {
+            Section("Stratégie de décodage") {
+                Picker("Stratégie de décodage", selection: $settings.useBeamSearch) {
+                    Text("Greedy (rapide)").tag(false)
+                    Text("Beam Search (précis)").tag(true)
+                }
+                .pickerStyle(.radioGroup)
+                .labelsHidden()
 
-            // MARK: - Decoding strategy
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "waveform.path.ecg", title: "Stratégie de décodage")
+                Text(settings.useBeamSearch
+                     ? "Explore plusieurs chemins. Meilleur pour les noms propres, termes techniques et langues mixtes."
+                     : "Choisit toujours le token le plus probable. Optimal pour la dictée en temps réel.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    VStack(spacing: 4) {
-                        DecodingModeRow(
-                            title: "Greedy (rapide)",
-                            description: "Choisit toujours le token le plus probable. Optimal pour la dictée en temps réel.",
-                            icon: "bolt.fill",
-                            isSelected: !settings.useBeamSearch,
-                            action: { settings.useBeamSearch = false }
-                        )
-                        DecodingModeRow(
-                            title: "Beam Search (précis)",
-                            description: "Explore plusieurs chemins. Meilleur pour les noms propres, termes techniques et langues mixtes.",
-                            icon: "sparkles",
-                            isSelected: settings.useBeamSearch,
-                            action: { settings.useBeamSearch = true }
-                        )
-                    }
-
-                    if settings.useBeamSearch {
-                        Divider().opacity(0.08)
-
-                        HStack {
-                            Image(systemName: "slider.horizontal.3")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.white.opacity(0.5))
-                            Text("Taille du beam")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.white.opacity(0.7))
-                            Spacer()
-                            HStack(spacing: 8) {
-                                Text("\(settings.beamSize)")
-                                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 20, alignment: .center)
-
-                                Stepper("", value: $settings.beamSize, in: 2...8)
-                                    .labelsHidden()
-                            }
+                if settings.useBeamSearch {
+                    Stepper(value: $settings.beamSize, in: 2...8) {
+                        LabeledContent("Taille du beam") {
+                            Text(verbatim: "\(settings.beamSize)")
+                                .monospacedDigit()
                         }
-                        .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
-                .animation(.spring(duration: 0.25), value: settings.useBeamSearch)
             }
 
-            // MARK: - Vocabulary & style
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        SectionHeader(icon: "text.quote", title: "Vocabulaire & style")
-                        Spacer()
-                        Menu {
-                            ForEach(PromptPreset.all) { preset in
-                                Button {
-                                    append(preset)
-                                } label: {
-                                    Text(preset.title)
-                                    Text(preset.subtitle)
-                                }
-                            }
-                            if !settings.initialPrompt.isEmpty {
-                                Divider()
-                                Button("Vider le champ", role: .destructive) {
-                                    settings.initialPrompt = ""
-                                }
-                            }
-                        } label: {
-                            Label("Exemples", systemImage: "sparkles")
-                                .font(.system(size: 12))
+            Section {
+                TextEditor(text: $settings.initialPrompt)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .frame(height: 70)
+                    .overlay(alignment: .topLeading) {
+                        if settings.initialPrompt.isEmpty {
+                            Text(Self.promptPlaceholder)
+                                .foregroundStyle(.tertiary)
+                                .padding(.leading, 5)
+                                .allowsHitTesting(false)
                         }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
                     }
-
-                    TextEditor(text: $settings.initialPrompt)
-                        .font(.system(size: 13))
-                        .scrollContentBackground(.hidden)
-                        .padding(6)
-                        .frame(height: 70)
-                        .background(
-                            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                                .fill(Color.white.opacity(0.06))
-                                .overlay(
-                                    ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                )
-                        )
-                        .overlay(alignment: .topLeading) {
-                            if settings.initialPrompt.isEmpty {
-                                Text(Self.promptPlaceholder)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.white.opacity(0.25))
-                                    .padding(.horizontal, 11)
-                                    .padding(.vertical, 14)
-                                    .allowsHitTesting(false)
+            } header: {
+                HStack {
+                    Text("Vocabulaire & style")
+                    Spacer()
+                    Menu {
+                        ForEach(PromptPreset.all) { preset in
+                            Button {
+                                append(preset)
+                            } label: {
+                                Text(preset.title)
+                                Text(preset.subtitle)
                             }
                         }
-
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écrivez donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme vous souhaitez la sortie. Vide = désactivé.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.3))
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Spacer(minLength: 0)
-
                         if !settings.initialPrompt.isEmpty {
-                            Text(verbatim: "\(settings.initialPrompt.count) / ≈\(PromptPreset.approximateCharacterBudget)")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(isPromptOverBudget ? .orange : .white.opacity(0.3))
-                                .help("Au-delà, whisper.cpp coupe le début du texte.")
+                            Divider()
+                            Button("Vider le champ", role: .destructive) {
+                                settings.initialPrompt = ""
+                            }
                         }
+                    } label: {
+                        Label("Exemples", systemImage: "sparkles")
                     }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                }
+            } footer: {
+                HStack(alignment: .top, spacing: 8) {
+                    Text("Whisper n'obéit pas à des consignes : il imite ce qu'il lit ici. Écrivez donc des exemples, pas des ordres — les noms propres et le jargon à reconnaître, et une phrase ponctuée comme vous souhaitez la sortie. Vide = désactivé.")
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+
+                    if !settings.initialPrompt.isEmpty {
+                        Text(verbatim: "\(settings.initialPrompt.count) / ≈\(PromptPreset.approximateCharacterBudget)")
+                            .monospacedDigit()
+                            .foregroundStyle(isPromptOverBudget ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+                            .help("Au-delà, whisper.cpp coupe le début du texte.")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+
+            Section("Filtrage du silence") {
+                VADToggleRow(settings: settings)
+            }
+
+            Section("Matériel") {
+                SettingsToggleRow(
+                    label: "Accélération GPU (Metal)",
+                    description: "Utilise le GPU Apple Silicon pour accélérer la transcription. Désactiver libère le GPU pour d'autres apps.",
+                    isOn: $settings.useGPU
+                )
+
+                VStack(alignment: .leading, spacing: 6) {
+                    LabeledContent("Délai de déchargement") {
+                        Text(verbatim: Self.formatDelay(settings.modelUnloadDelay))
+                            .monospacedDigit()
+                    }
+                    Slider(value: $settings.modelUnloadDelay, in: 0.0...300.0) {
+                        Text("Délai de déchargement")
+                    } minimumValueLabel: {
+                        Text(verbatim: "0s")
+                    } maximumValueLabel: {
+                        Text("5 min")
+                    }
+                    .labelsHidden()
+                    Text("Temps avant de décharger le modèle de la RAM après une dictée. 0s = immédiat.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
-            // MARK: - Silence filtering
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "waveform.badge.mic", title: "Filtrage du silence")
-                    VADToggleRow(settings: settings)
+            Section {
+                LabeledContent("Version") {
+                    Text(verbatim: String(cString: whisper_version()))
+                        .monospaced()
+                        .textSelection(.enabled)
                 }
-            }
-
-            // MARK: - Context & hardware
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "cpu.fill", title: "Matériel")
-
-                    SettingsToggleRow(
-                        icon: "memorychip.fill",
-                        label: "Accélération GPU (Metal)",
-                        description: "Utilise le GPU Apple Silicon pour accélérer la transcription. Désactiver libère le GPU pour d'autres apps.",
-                        isOn: $settings.useGPU
-                    )
-                    
-                    Divider().opacity(0.08)
-
-                    EngineSliderRow(
-                        icon: "timer",
-                        label: "Délai de déchargement",
-                        value: $settings.modelUnloadDelay,
-                        range: 0.0...300.0,
-                        lowLabel: "0s",
-                        highLabel: "5 min",
-                        description: "Temps avant de décharger le modèle de la RAM après une dictée. 0s = immédiat.",
-                        format: { val in
-                            val == 0 ? "0s" : (val < 60 ? "\(Int(val))s" : "\(Int(val)/60)m\(Int(val)%60 > 0 ? " \(Int(val)%60)s" : "")")
-                        }
-                    )
+                LabeledContent {
+                    Text(verbatim: EngineBuildInfo.whisperCommit)
+                        .monospaced()
+                        .textSelection(.enabled)
+                } label: {
+                    Text(verbatim: "Commit")
                 }
-            }
-
-            // MARK: - Engine info
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 10) {
-                    SectionHeader(icon: "info.circle.fill", title: "Moteur whisper.cpp")
-
-                    HStack {
-                        Text("Version")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                        Text(verbatim: String(cString: whisper_version()))
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.9))
-                    }
-
-                    HStack {
-                        Text("Commit")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                        Text(verbatim: EngineBuildInfo.whisperCommit)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.9))
-                    }
-
+            } header: {
+                Text("Moteur whisper.cpp")
+            } footer: {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Le moteur est intégré à l'app : il se met à jour avec les mises à jour de Mynah.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.3))
+                    Text("Certains changements prennent effet au prochain enregistrement.")
                 }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
-
-            Text("Certains changements prennent effet au prochain enregistrement.")
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.25))
         }
+        .formStyle(.grouped)
+    }
+
+    private static func formatDelay(_ value: Double) -> String {
+        let seconds = Int(value)
+        if seconds == 0 { return "0s" }
+        if seconds < 60 { return "\(seconds)s" }
+        return seconds % 60 > 0 ? "\(seconds / 60)m \(seconds % 60)s" : "\(seconds / 60)m"
     }
 
     private var isPromptOverBudget: Bool {
@@ -223,57 +174,6 @@ struct EngineSection: View {
         "Kubernetes, PostgreSQL, Figma, Slack. Voici une phrase ponctuée normalement, avec des virgules et un point final."
 }
 
-// MARK: - Decoding mode row
-
-private struct DecodingModeRow: View {
-    // LocalizedStringKey, not String: Text(String) skips the string catalog.
-    let title: LocalizedStringKey
-    let description: LocalizedStringKey
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .strokeBorder(
-                            isSelected ? Color.accentColor : Color.white.opacity(0.2),
-                            lineWidth: 1.5
-                        )
-                        .frame(width: 18, height: 18)
-                    if isSelected {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 10, height: 10)
-                    }
-                }
-
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(isSelected ? Color.accentColor : .white.opacity(0.4))
-                    .frame(width: 16)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
-                    Text(description)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
-    }
-}
-
 // MARK: - VAD toggle row (with Silero model download)
 
 /// Shared with the onboarding engine step, which offers the same toggle.
@@ -286,7 +186,6 @@ struct VADToggleRow: View {
 
         VStack(alignment: .leading, spacing: 8) {
             SettingsToggleRow(
-                icon: "waveform.and.mic",
                 label: "Filtre VAD (Silero)",
                 description: "Ignore les passages sans parole avant la transcription. Réduit les hallucinations sur les silences.",
                 isOn: Binding(
@@ -307,85 +206,25 @@ struct VADToggleRow: View {
                         ProgressView(value: progress)
                             .frame(maxWidth: 160)
                         Text("Téléchargement du modèle VAD… \(Int(progress * 100)) %")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.4))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 case .installing:
                     Text("Installation…")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 case .failed(let message):
                     Text("Échec du téléchargement : \(message)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.red.opacity(0.8))
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
                 case .idle:
                     Text("Modèle VAD manquant — désactivez puis réactivez pour relancer le téléchargement.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.orange.opacity(0.8))
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
                 case .done:
                     EmptyView()
                 }
             }
-        }
-    }
-}
-
-// MARK: - Engine slider row
-
-private struct EngineSliderRow: View {
-    let icon: String
-    // LocalizedStringKey, not String: Text(String) skips the string catalog.
-    let label: LocalizedStringKey
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-    let lowLabel: LocalizedStringKey
-    let highLabel: LocalizedStringKey
-    let description: LocalizedStringKey
-    var step: Double? = nil
-    let format: (Double) -> String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(width: 20)
-                Text(label)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
-                Spacer()
-                Text(format(value))
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.accentColor.opacity(0.12))
-                    .clipShape(ConcentricRectangle(corners: .concentric(minimum: 6), isUniform: true))
-            }
-
-            if let step = step {
-                Slider(value: $value, in: range, step: step)
-                    .tint(Color.accentColor)
-            } else {
-                Slider(value: $value, in: range)
-                    .tint(Color.accentColor)
-            }
-
-            HStack {
-                Text(lowLabel)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.25))
-                Spacer()
-                Text(highLabel)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.25))
-            }
-
-            Text(description)
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.3))
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

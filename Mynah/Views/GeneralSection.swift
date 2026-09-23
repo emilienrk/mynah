@@ -14,140 +14,100 @@ struct GeneralSection: View {
     @State private var availableSounds: [String] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-
-            // MARK: - Hotkey recorder
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "keyboard", title: "Raccourci clavier")
-
-                    HStack {
-                        Text("Touche active")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                        HotKeyRecorder(
-                            hotKey: Binding(
-                                get: { settings.currentHotKey },
-                                set: { newKey in
-                                    settings.hotKeyCode = newKey.keyCode
-                                    settings.hotKeyModifiers = newKey.modifiers
-                                    hotkeyManager.updateHotKey(newKey)
-                                }
-                            ),
-                            hotkeyManager: hotkeyManager
-                        )
-                    }
-                }
-            }
-
-            // MARK: - Recording mode
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "record.circle", title: "Mode d'enregistrement")
-                    VStack(spacing: 4) {
-                        ForEach(HotKeyMode.allCases, id: \.self) { mode in
-                            ModeRow(
-                                mode: mode,
-                                isSelected: settings.hotKeyMode == mode,
-                                onSelect: {
-                                    settings.hotKeyMode = mode
-                                    hotkeyManager.setMode(mode)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // MARK: - Dictation behavior
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "text.bubble.fill", title: "Comportement")
-
-                    SettingsToggleRow(
-                        icon: "doc.on.clipboard.fill",
-                        label: "Coller automatiquement",
-                        description: "Insère le texte directement dans l'app active après la transcription.",
-                        isOn: $settings.autoPasteEnabled
-                    )
-
-                    Divider().opacity(0.08)
-
-                    SettingsToggleRow(
-                        icon: "speaker.wave.2.fill",
-                        label: "Sons de dictée",
-                        description: "Émet un son bref au démarrage de l'enregistrement et quand la transcription est prête.",
-                        isOn: $settings.confirmationSoundEnabled
-                    )
-
-                    if settings.confirmationSoundEnabled {
-                        VStack(spacing: 6) {
-                            SoundPickerRow(
-                                label: "Au démarrage",
-                                selection: $settings.startSoundName,
-                                names: availableSounds
-                            )
-                            SoundPickerRow(
-                                label: "Transcription prête",
-                                selection: $settings.finishSoundName,
-                                names: availableSounds
-                            )
-                        }
-                        // Aligns under the toggle's label, past its icon column.
-                        .padding(.leading, 32)
-                    }
-
-                    Divider().opacity(0.08)
-
-                    SettingsToggleRow(
-                        icon: "pause.circle.fill",
-                        label: "Mettre la musique en pause",
-                        description: "Coupe la lecture en cours pendant la dictée, puis la relance.",
-                        isOn: $settings.pauseMediaWhileRecording
+        Form {
+            Section("Raccourci clavier") {
+                LabeledContent("Touche active") {
+                    HotKeyRecorder(
+                        hotKey: Binding(
+                            get: { settings.currentHotKey },
+                            set: { newKey in
+                                settings.hotKeyCode = newKey.keyCode
+                                settings.hotKeyModifiers = newKey.modifiers
+                                hotkeyManager.updateHotKey(newKey)
+                            }
+                        ),
+                        hotkeyManager: hotkeyManager
                     )
                 }
             }
 
-            // MARK: - System
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "gearshape.2.fill", title: "Système")
-
-                    SettingsToggleRow(
-                        icon: "arrow.up.circle.fill",
-                        label: "Démarrer au login",
-                        description: "Lance Mynah automatiquement au démarrage de macOS.",
-                        isOn: $settings.launchAtLogin
-                    )
+            Section("Mode d'enregistrement") {
+                Picker("Mode d'enregistrement", selection: Binding(
+                    get: { settings.hotKeyMode },
+                    set: { mode in
+                        settings.hotKeyMode = mode
+                        hotkeyManager.setMode(mode)
+                    }
+                )) {
+                    ForEach(HotKeyMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
                 }
+                .pickerStyle(.radioGroup)
+                .labelsHidden()
+
+                Text(settings.hotKeyMode == .pushToTalk
+                     ? "Maintenez la touche — relâchez pour transcrire"
+                     : "Un appui pour démarrer, un appui pour arrêter")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
-            // MARK: - Interface
-            SettingsCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(icon: "character.bubble.fill", title: "Interface")
+            Section("Comportement") {
+                SettingsToggleRow(
+                    label: "Coller automatiquement",
+                    description: "Insère le texte directement dans l'app active après la transcription.",
+                    isOn: $settings.autoPasteEnabled
+                )
 
-                    HStack {
-                        Text("Langue de l'application")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.9))
-                        Spacer()
-                        Picker("", selection: $settings.uiLanguage) {
-                            Text(verbatim: "Français").tag("fr")
-                            Text(verbatim: "English").tag("en")
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .frame(width: 120)
-                    }
+                SettingsToggleRow(
+                    label: "Sons de dictée",
+                    description: "Émet un son bref au démarrage de l'enregistrement et quand la transcription est prête.",
+                    isOn: $settings.confirmationSoundEnabled
+                )
 
-                    Text("Le changement de langue nécessite le redémarrage de l'application.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
+                if settings.confirmationSoundEnabled {
+                    SoundPickerRow(
+                        label: "Au démarrage",
+                        selection: $settings.startSoundName,
+                        names: availableSounds
+                    )
+                    SoundPickerRow(
+                        label: "Transcription prête",
+                        selection: $settings.finishSoundName,
+                        names: availableSounds
+                    )
                 }
+
+                SettingsToggleRow(
+                    label: "Mettre la musique en pause",
+                    description: "Coupe la lecture en cours pendant la dictée, puis la relance.",
+                    isOn: $settings.pauseMediaWhileRecording
+                )
+            }
+
+            Section("Système") {
+                SettingsToggleRow(
+                    label: "Démarrer au login",
+                    description: "Lance Mynah automatiquement au démarrage de macOS.",
+                    isOn: $settings.launchAtLogin
+                )
+            }
+
+            Section {
+                Picker("Langue de l'application", selection: $settings.uiLanguage) {
+                    Text(verbatim: "Français").tag("fr")
+                    Text(verbatim: "English").tag("en")
+                }
+            } header: {
+                Text("Interface")
+            } footer: {
+                Text("Le changement de langue nécessite le redémarrage de l'application.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
+        .formStyle(.grouped)
         .onAppear {
             availableSounds = SystemSoundLibrary.availableNames
             settings.refreshLaunchAtLogin()
@@ -171,138 +131,10 @@ private struct SoundPickerRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.55))
-
-            Spacer()
-
-            Picker("", selection: $selection) {
-                ForEach(options, id: \.self) { Text($0).tag($0) }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 160)
-            .onChange(of: selection) { _, name in SystemSoundLibrary.play(named: name) }
+        Picker(label, selection: $selection) {
+            ForEach(options, id: \.self) { Text($0).tag($0) }
         }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Reusable toggle row
-
-struct SettingsToggleRow: View {
-    let icon: String
-    // LocalizedStringKey, not String: Text(String) skips the string catalog.
-    let label: LocalizedStringKey
-    let description: LocalizedStringKey
-    @Binding var isOn: Bool
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.8))
-                .frame(width: 28, height: 28)
-                .background(Color.white.opacity(0.06))
-                .clipShape(ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true))
-                .overlay(
-                    ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.92))
-                Text(description)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer()
-
-            Toggle("", isOn: $isOn)
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .tint(Color.accentColor)
-                .scaleEffect(0.85)
-        }
-        .frame(maxWidth: .infinity, minHeight: 44)
-        .contentShape(Rectangle())
-        .onTapGesture { isOn.toggle() }
-    }
-}
-
-// MARK: - Mode row
-
-private struct ModeRow: View {
-    let mode: HotKeyMode
-    let isSelected: Bool
-    let onSelect: () -> Void
-
-    var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .strokeBorder(
-                            isSelected ? Color.accentColor : Color.white.opacity(0.25),
-                            lineWidth: 1.5
-                        )
-                        .frame(width: 18, height: 18)
-                    if isSelected {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 10, height: 10)
-                            .shadow(color: Color.accentColor.opacity(0.7), radius: 4)
-                    }
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(mode.displayName)
-                        .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-                        .foregroundStyle(isSelected ? .white : .white.opacity(0.65))
-                    Text(mode == .pushToTalk
-                         ? "Maintenez la touche — relâchez pour transcrire"
-                         : "Un appui pour démarrer, un appui pour arrêter")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.38))
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                    .fill(
-                        isSelected
-                        ? LinearGradient(
-                            colors: [Color.accentColor.opacity(0.18), Color.accentColor.opacity(0.07)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        : LinearGradient(colors: [Color.clear, Color.clear], startPoint: .top, endPoint: .bottom)
-                    )
-                    .overlay(
-                        ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                            .stroke(
-                                isSelected
-                                ? LinearGradient(
-                                    colors: [Color.accentColor.opacity(0.6), Color.accentColor.opacity(0.25)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                                : LinearGradient(colors: [Color.clear, Color.clear], startPoint: .top, endPoint: .bottom),
-                                lineWidth: 1
-                            )
-                    )
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .onChange(of: selection) { _, name in SystemSoundLibrary.play(named: name) }
     }
 }
 
@@ -318,46 +150,21 @@ struct HotKeyRecorder: View {
 
     var body: some View {
         Button(action: toggleRecording) {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 if isRecording {
                     Circle()
                         .fill(.red)
                         .frame(width: 7, height: 7)
-                        .shadow(color: .red.opacity(0.8), radius: 4)
                     Text("Appuyez sur une touche…")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.9))
                 } else {
                     Text(hotKey.displayString)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .fontWeight(.medium)
                     Image(systemName: "pencil")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
-                    .fill(
-                        isRecording
-                        ? LinearGradient(colors: [Color.red.opacity(0.25), Color.red.opacity(0.12)], startPoint: .top, endPoint: .bottom)
-                        : LinearGradient(colors: [Color.white.opacity(0.14), Color.white.opacity(0.07)], startPoint: .top, endPoint: .bottom)
-                    )
-                    .overlay(
-                        ConcentricRectangle(corners: .concentric(minimum: 7), isUniform: true)
-                            .stroke(
-                                isRecording
-                                ? LinearGradient(colors: [Color.red.opacity(0.7), Color.red.opacity(0.3)], startPoint: .top, endPoint: .bottom)
-                                : LinearGradient(colors: [Color.white.opacity(0.25), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom),
-                                lineWidth: 1
-                            )
-                    )
-                    .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1.5)
-            )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bordered)
         .onDisappear { stopRecording() }
     }
 

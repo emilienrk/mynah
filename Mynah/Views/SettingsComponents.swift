@@ -5,57 +5,32 @@
 
 import SwiftUI
 
-// MARK: - Glassmorphism card
+// MARK: - Toggle row
 
-struct SettingsCard<Content: View>: View {
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.075), Color.white.opacity(0.04)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.18), Color.white.opacity(0.06)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1
-                            )
-                    )
-                    .shadow(color: Color.black.opacity(0.18), radius: 8, x: 0, y: 3)
-            )
-            .containerShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-}
-
-// MARK: - Section header
-
-struct SectionHeader: View {
-    var icon: String? = nil
-    let title: LocalizedStringKey
-
-    init(icon: String? = nil, title: LocalizedStringKey) {
-        self.icon = icon
-        self.title = title
-    }
+/// Title and explanation on the left, switch on the right — the System Settings
+/// row. Laid out by hand rather than left to Form, so the onboarding cards can
+/// host it outside a Form and still get the same layout.
+struct SettingsToggleRow: View {
+    // LocalizedStringKey, not String: Text(String) skips the string catalog.
+    let label: LocalizedStringKey
+    let description: LocalizedStringKey
+    @Binding var isOn: Bool
 
     var body: some View {
-        Text(title)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(.white.opacity(0.45))
-            .textCase(.uppercase)
-            .kerning(0.6)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            Toggle(isOn: $isOn) { Text(label) }
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
     }
 }

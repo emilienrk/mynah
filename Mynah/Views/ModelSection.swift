@@ -2,7 +2,6 @@
 // Mynah
 //
 // Settings tab: model selection + download with progress bar.
-// The ScrollView is now managed by the parent SettingsView — no inner scroll here.
 
 import SwiftUI
 
@@ -17,46 +16,37 @@ struct ModelSection: View {
     private let physicalMemory = ProcessInfo.processInfo.physicalMemory
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-
-            VStack(alignment: .leading, spacing: 12) {
-                SettingsCard {
-                VStack(alignment: .leading, spacing: 8) {
-                    SectionHeader(icon: "cube.box.fill", title: "Modèle Whisper")
-                    HStack(spacing: 6) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.yellow.opacity(0.7))
+        Form {
+            Section {
+                ForEach(families) { family in
+                    FamilyGroup(
+                        family: family,
+                        isExpanded: Binding(
+                            get: { expandedFamilies.contains(family.name) },
+                            set: { setExpanded(family.name, $0) }
+                        ),
+                        states: family.variants.map { manager.state(for: $0) },
+                        selectedFilename: settings.selectedModelFilename,
+                        row: { variant in row(for: variant) }
+                    )
+                }
+            } header: {
+                Text("Modèle Whisper")
+            } footer: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label {
                         Text("Marquez jusqu'à \(AppSettings.maxFavorites) modèles en favori pour un accès rapide depuis la barre de menu.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.3))
+                    } icon: {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(.yellow)
                     }
                     Text("Stockés dans ~/Library/Application Support/Mynah/Models/")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.2))
                 }
-                }
-            }
-            .padding(20)
-
-            // Model list, folded by family
-            ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(families) { family in
-                        FamilyGroup(
-                            family: family,
-                            isExpanded: expandedFamilies.contains(family.name),
-                            states: family.variants.map { manager.state(for: $0) },
-                            selectedFilename: settings.selectedModelFilename,
-                            onToggleExpanded: { toggleExpanded(family.name) },
-                            row: { variant in row(for: variant) }
-                        )
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         }
+        .formStyle(.grouped)
         .onAppear {
             manager.refreshInstalled()
             expandFamiliesInUse()
@@ -99,11 +89,11 @@ struct ModelSection: View {
 
     // MARK: - Expansion
 
-    private func toggleExpanded(_ family: String) {
-        if expandedFamilies.contains(family) {
-            expandedFamilies.remove(family)
-        } else {
+    private func setExpanded(_ family: String, _ expanded: Bool) {
+        if expanded {
             expandedFamilies.insert(family)
+        } else {
+            expandedFamilies.remove(family)
         }
     }
 
@@ -122,10 +112,9 @@ struct ModelSection: View {
 
 private struct FamilyGroup<Row: View>: View {
     let family: WhisperModelFamily
-    let isExpanded: Bool
+    @Binding var isExpanded: Bool
     let states: [ModelDownloadState]
     let selectedFilename: String
-    let onToggleExpanded: () -> Void
     @ViewBuilder let row: (WhisperModelDescriptor) -> Row
 
     private var installedCount: Int {
@@ -145,42 +134,18 @@ private struct FamilyGroup<Row: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            Button(action: onToggleExpanded) {
-                HStack(spacing: 10) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-
-                    Text(family.name)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(installedCount > 0 ? 1 : 0.7))
-
-                    Spacer()
-
-                    summary
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
+        DisclosureGroup(isExpanded: $isExpanded) {
+            ForEach(family.variants) { variant in
+                row(variant)
             }
-            .buttonStyle(.plain)
-
-            if isExpanded {
-                VStack(spacing: 6) {
-                    ForEach(family.variants) { variant in
-                        row(variant)
-                    }
-                }
-                .padding(.leading, 20)
+        } label: {
+            HStack {
+                Text(family.name)
+                    .foregroundStyle(installedCount > 0 ? .primary : .secondary)
+                Spacer()
+                summary
             }
         }
-        .background(
-            ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
-                .fill(Color.white.opacity(0.03))
-        )
-        .animation(.easeInOut(duration: 0.18), value: isExpanded)
     }
 
     @ViewBuilder
@@ -188,33 +153,28 @@ private struct FamilyGroup<Row: View>: View {
         if let active = activeVariant {
             HStack(spacing: 6) {
                 Text(active.quantization)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.secondary)
                 Text("Actif")
-                    .font(.system(size: 11, weight: .medium))
+                    .fontWeight(.medium)
                     .foregroundStyle(Color.accentColor)
             }
         } else if isBusy {
-            ProgressView().scaleEffect(0.5).frame(width: 16, height: 16)
+            ProgressView().controlSize(.small)
         } else if installedCount > 0 {
             if installedCount > 1 {
                 Text("\(installedCount) installés")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.secondary)
             } else {
                 Text("1 installé")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.secondary)
             }
         } else {
             if family.variants.count > 1 {
                 Text("\(family.variants.count) variantes")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.25))
+                    .foregroundStyle(.tertiary)
             } else {
                 Text("1 variante")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.25))
+                    .foregroundStyle(.tertiary)
             }
         }
     }
@@ -240,37 +200,33 @@ private struct ModelRow: View {
     private var isDownloaded: Bool { downloadState == .done }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-
-                // Selection checkbox (only when downloaded)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
                 selectionIndicator
 
                 // Precision + size — the family header already carries the name
                 HStack(spacing: 6) {
                     Text(model.quantization)
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(isDownloaded ? .white : .white.opacity(0.45))
+                        .monospaced()
+                        .foregroundStyle(isDownloaded ? .primary : .secondary)
                     if model.isEnglishOnly {
-                        Text("EN")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.5))
+                        Text(verbatim: "EN")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
-                            .background(Capsule().fill(Color.white.opacity(0.1)))
+                            .background(Capsule().fill(.quaternary))
                     }
                     Text(model.fileSize)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.3))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                // Favorite button (only when downloaded)
                 if isDownloaded {
                     Button(action: onToggleFavorite) {
                         Image(systemName: isFavorite ? "star.fill" : "star")
-                            .foregroundStyle(isFavorite ? .yellow : .white.opacity(canFavorite ? 0.25 : 0.1))
+                            .foregroundStyle(isFavorite ? AnyShapeStyle(.yellow) : AnyShapeStyle(.tertiary))
                     }
                     .buttonStyle(.borderless)
                     .help(isFavorite ? "Retirer des favoris" : canFavorite ? "Ajouter aux favoris" : "Maximum \(AppSettings.maxFavorites) favoris")
@@ -278,43 +234,24 @@ private struct ModelRow: View {
                     .animation(.spring(duration: 0.25), value: isFavorite)
                 }
 
-                // Action area (right side)
                 trailingAction
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
 
             if isHeavy {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                Label {
                     Text("Lourd pour ce Mac (\(Int(ProcessInfo.processInfo.physicalMemory >> 30)) Go de RAM) : risque de ralentissements.")
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
                 }
-                .font(.system(size: 11))
-                .foregroundStyle(.orange.opacity(0.8))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .padding(.bottom, 10)
+                .font(.subheadline)
+                .foregroundStyle(.orange)
             }
 
-            // Inline progress bar
             if case .downloading(let progress) = downloadState {
-                DownloadProgressBar(progress: progress)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 10)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                ProgressView(value: progress)
+                    .transition(.opacity)
             }
         }
-        .background(
-            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                .fill(isSelected ? Color.white.opacity(0.09) : Color.white.opacity(0.04))
-                .overlay(
-                    ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                        .stroke(
-                            isSelected ? Color.accentColor.opacity(0.35) : Color.white.opacity(0.07),
-                            lineWidth: 1
-                        )
-                )
-        )
         .animation(.easeInOut(duration: 0.2), value: downloadState)
         .contentShape(Rectangle())
         .onTapGesture { if isDownloaded { onSelect() } }
@@ -322,26 +259,10 @@ private struct ModelRow: View {
 
     // MARK: - Sub-views
 
-    @ViewBuilder
     private var selectionIndicator: some View {
-        ZStack {
-            ConcentricRectangle(corners: .concentric(minimum: 5), isUniform: true)
-                .fill(isSelected ? Color.accentColor.opacity(0.25) : Color.white.opacity(0.05))
-                .overlay(
-                    ConcentricRectangle(corners: .concentric(minimum: 5), isUniform: true)
-                        .stroke(
-                            isSelected ? Color.accentColor : Color.white.opacity(0.12),
-                            lineWidth: 1
-                        )
-                )
-                .frame(width: 20, height: 20)
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
-            }
-        }
-        .opacity(isDownloaded ? 1 : 0.4)
+        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+            .foregroundStyle(isSelected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
+            .opacity(isDownloaded ? 1 : 0.4)
     }
 
     @ViewBuilder
@@ -355,12 +276,12 @@ private struct ModelRow: View {
         case .downloading(let progress):
             // Cancel button + percentage
             HStack(spacing: 8) {
-                Text("\(Int(progress * 100))%")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.4))
+                Text(verbatim: "\(Int(progress * 100))%")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
                 Button(role: .cancel, action: onCancel) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.white.opacity(0.3))
+                        .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.borderless)
                 .help("Annuler")
@@ -369,17 +290,15 @@ private struct ModelRow: View {
         case .installing:
             HStack(spacing: 6) {
                 ProgressView()
-                    .scaleEffect(0.65)
+                    .controlSize(.small)
                 Text("Installation…")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.secondary)
             }
 
         case .done:
             HStack(spacing: 8) {
                 Text(isSelected ? "Actif" : "Installé")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(isSelected ? Color.accentColor : .white.opacity(0.4))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary))
                 Button(role: .destructive, action: onDelete) {
                     Image(systemName: "trash")
                 }
@@ -392,34 +311,5 @@ private struct ModelRow: View {
                 Label(LocalizedStringKey("Réessayer"), systemImage: "arrow.clockwise")
             }
         }
-    }
-}
-
-// MARK: - Progress bar
-
-private struct DownloadProgressBar: View {
-    let progress: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                // Track
-                Capsule()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: 4)
-                // Fill
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: max(8, geo.size.width * progress), height: 4)
-                    .animation(.easeInOut(duration: 0.3), value: progress)
-            }
-        }
-        .frame(height: 4)
     }
 }

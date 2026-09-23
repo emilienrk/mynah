@@ -15,12 +15,13 @@ struct AboutSection: View {
     private var updater: UpdaterService { .shared }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            identityCard
-            updatesCard
-            privacyCard
-            licensesCard
+        Form {
+            identitySection
+            updatesSection
+            privacySection
+            licensesSection
         }
+        .formStyle(.grouped)
         .sheet(isPresented: $showsLicenses) {
             LicenseSheet(text: Self.licenseText)
         }
@@ -28,75 +29,54 @@ struct AboutSection: View {
 
     // MARK: - Identity
 
-    private var identityCard: some View {
-        SettingsCard {
+    private var identitySection: some View {
+        Section {
             HStack(spacing: 14) {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
                     .frame(width: 56, height: 56)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Mynah")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
+                    Text(verbatim: "Mynah")
+                        .font(.title3.weight(.semibold))
                     Text(Self.versionLabel)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-
-                Spacer()
             }
         }
     }
 
     // MARK: - Updates
 
-    private var updatesCard: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(icon: "arrow.down.circle.fill", title: "Mises à jour")
-
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(updateStatusLabel)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.9))
-                        Text(lastCheckLabel)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.35))
-                    }
-
-                    Spacer()
-
-                    Button {
-                        updater.checkForUpdates()
-                    } label: {
-                        HStack(spacing: 6) {
-                            if updater.result == .checking {
-                                ProgressView()
-                                    .controlSize(.small)
-                            }
-                            Text("Vérifier maintenant")
+    private var updatesSection: some View {
+        Section("Mises à jour") {
+            LabeledContent {
+                Button {
+                    updater.checkForUpdates()
+                } label: {
+                    HStack(spacing: 6) {
+                        if updater.result == .checking {
+                            ProgressView()
+                                .controlSize(.small)
                         }
-                        .frame(minWidth: 120)
+                        Text("Vérifier maintenant")
                     }
-                    .controlSize(.large)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!updater.canCheckForUpdates)
                 }
-
-                Divider().opacity(0.08)
-
-                SettingsToggleRow(
-                    icon: "clock.arrow.circlepath",
-                    label: "Vérifier automatiquement",
-                    description: "Mynah cherche une nouvelle version en arrière-plan. Les mises à jour incluent le moteur whisper.cpp intégré.",
-                    isOn: Binding(
-                        get: { updater.automaticallyChecksForUpdates },
-                        set: { updater.automaticallyChecksForUpdates = $0 }
-                    )
-                )
+                .disabled(!updater.canCheckForUpdates)
+            } label: {
+                Text(updateStatusLabel)
+                Text(lastCheckLabel)
             }
+
+            SettingsToggleRow(
+                label: "Vérifier automatiquement",
+                description: "Mynah cherche une nouvelle version en arrière-plan. Les mises à jour incluent le moteur whisper.cpp intégré.",
+                isOn: Binding(
+                    get: { updater.automaticallyChecksForUpdates },
+                    set: { updater.automaticallyChecksForUpdates = $0 }
+                )
+            )
         }
     }
 
@@ -123,23 +103,19 @@ struct AboutSection: View {
 
     // MARK: - Privacy
 
-    private var privacyCard: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: 10) {
-                SectionHeader(icon: "lock.shield.fill", title: "Confidentialité")
-
+    private var privacySection: some View {
+        Section("Confidentialité") {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Votre voix est transcrite sur votre Mac. Aucun audio, aucune transcription et aucune donnée d'usage ne quittent l'appareil.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.7))
                     .fixedSize(horizontal: false, vertical: true)
 
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Mynah n'établit que deux connexions sortantes :")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
                     bullet("le téléchargement des modèles, depuis Hugging Face")
                     bullet("la vérification des mises à jour de l'application")
                 }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -149,67 +125,49 @@ struct AboutSection: View {
             Text(verbatim: "•")
             Text(text)
         }
-        .font(.system(size: 11))
-        .foregroundStyle(.white.opacity(0.35))
     }
 
     // MARK: - Licenses
 
-    private var licensesCard: some View {
-        SettingsCard {
-            VStack(alignment: .leading, spacing: 10) {
-                SectionHeader(icon: "doc.text.fill", title: "Logiciels tiers")
+    private var licensesSection: some View {
+        Section("Logiciels tiers") {
+            componentRow(
+                name: "whisper.cpp / ggml",
+                license: "MIT",
+                url: "https://github.com/ggml-org/whisper.cpp"
+            )
+            componentRow(
+                name: "Sparkle",
+                license: "MIT",
+                url: "https://github.com/sparkle-project/Sparkle"
+            )
+            componentRow(
+                name: "Modèles Whisper",
+                license: "MIT · OpenAI",
+                url: "https://github.com/openai/whisper"
+            )
+            componentRow(
+                name: "Silero VAD",
+                license: "MIT",
+                url: "https://github.com/snakers4/silero-vad"
+            )
 
-                componentRow(
-                    name: "whisper.cpp / ggml",
-                    license: "MIT",
-                    url: "https://github.com/ggml-org/whisper.cpp"
-                )
-                componentRow(
-                    name: "Sparkle",
-                    license: "MIT",
-                    url: "https://github.com/sparkle-project/Sparkle"
-                )
-                componentRow(
-                    name: "Modèles Whisper",
-                    license: "MIT · OpenAI",
-                    url: "https://github.com/openai/whisper"
-                )
-                componentRow(
-                    name: "Silero VAD",
-                    license: "MIT",
-                    url: "https://github.com/snakers4/silero-vad"
-                )
-
-                Button {
-                    showsLicenses = true
-                } label: {
-                    Text("Afficher les licences complètes")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.white.opacity(0.75))
-                .padding(.top, 2)
+            Button("Afficher les licences complètes") {
+                showsLicenses = true
             }
         }
     }
 
     private func componentRow(name: String, license: String, url: String) -> some View {
-        HStack(spacing: 8) {
-            Text(name)
-                .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.75))
-            Text(license)
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.3))
-            Spacer()
+        LabeledContent {
             if let destination = URL(string: url) {
                 Link(destination: destination) {
                     Image(systemName: "arrow.up.right.square")
-                        .font(.system(size: 11))
                 }
-                .foregroundStyle(.white.opacity(0.4))
             }
+        } label: {
+            Text(name)
+            Text(license)
         }
     }
 
@@ -246,7 +204,7 @@ private struct LicenseSheet: View {
             ScrollView {
                 Text(text)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(20)
@@ -262,6 +220,5 @@ private struct LicenseSheet: View {
             .padding(12)
         }
         .frame(width: 560, height: 480)
-        .preferredColorScheme(.dark)
     }
 }

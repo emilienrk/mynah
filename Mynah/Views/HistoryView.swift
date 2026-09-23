@@ -10,7 +10,6 @@ struct HistoryView: View {
 
     @State private var confirmsClear = false
     @State private var copiedItemId: UUID?
-    @State private var deletingItemIds: Set<UUID> = []
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -20,15 +19,47 @@ struct HistoryView: View {
     }()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            
-            // Header
-            SettingsCard {
+        Form {
+            Section {
+                if historyService.items.isEmpty {
+                    ContentUnavailableView("Aucune transcription récente.", systemImage: "clock")
+                } else {
+                    ForEach(historyService.items) { item in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(alignment: .top) {
+                                Text(dateFormatter.string(from: item.date))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                HStack(spacing: 6) {
+                                    HistoryCopyButton(
+                                        isCopied: copiedItemId == item.id,
+                                        action: { copyToClipboard(item: item) }
+                                    )
+
+                                    HistoryDeleteButton(
+                                        action: { deleteItem(id: item.id) }
+                                    )
+                                }
+                            }
+
+                            TextField("Transcription", text: Binding(
+                                get: { item.text },
+                                set: { historyService.updateItem(id: item.id, newText: $0) }
+                            ), axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .labelsHidden()
+                        }
+                    }
+                }
+            } header: {
                 HStack {
-                    SectionHeader(icon: "clock.fill", title: "Historique des transcriptions")
-                    
+                    Text("Historique des transcriptions")
+
                     Spacer()
-                    
+
                     Button(role: .destructive) {
                         confirmsClear = true
                     } label: {
@@ -47,64 +78,10 @@ struct HistoryView: View {
                     }
                 }
             }
-            
-            // Content
-            if historyService.items.isEmpty {
-                SettingsCard {
-                    VStack(spacing: 12) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 32))
-                            .foregroundStyle(.white.opacity(0.2))
-                        Text("Aucune transcription récente.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.4))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 30)
-                }
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(historyService.items) { item in
-                        let isDeleting = deletingItemIds.contains(item.id)
-                        SettingsCard {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack(alignment: .top) {
-                                    Text(dateFormatter.string(from: item.date))
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(.white.opacity(0.4))
-                                    
-                                    Spacer()
-                                    
-                                    HStack(spacing: 6) {
-                                        HistoryCopyButton(
-                                            isCopied: copiedItemId == item.id,
-                                            action: { copyToClipboard(item: item) }
-                                        )
-
-                                        HistoryDeleteButton(
-                                            action: { deleteItem(id: item.id) }
-                                        )
-                                    }
-                                }
-                                
-                                TextField("", text: Binding(
-                                    get: { item.text },
-                                    set: { historyService.updateItem(id: item.id, newText: $0) }
-                                ), axis: .vertical)
-                                    .textFieldStyle(.plain)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.white.opacity(0.9))
-                            }
-                        }
-                        .opacity(isDeleting ? 0 : 1)
-                        .scaleEffect(isDeleting ? 0.95 : 1)
-                        .offset(x: isDeleting ? 12 : 0)
-                    }
-                }
-            }
         }
+        .formStyle(.grouped)
     }
-    
+
     private func copyToClipboard(item: HistoryItem) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -125,15 +102,8 @@ struct HistoryView: View {
     }
 
     private func deleteItem(id: UUID) {
-        withAnimation(.easeInOut(duration: 0.18)) {
-            _ = deletingItemIds.insert(id)
-        }
-        Task {
-            try? await Task.sleep(for: .milliseconds(180))
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
-                historyService.deleteItem(id: id)
-                deletingItemIds.remove(id)
-            }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+            historyService.deleteItem(id: id)
         }
     }
 }
@@ -149,11 +119,11 @@ private struct HistoryCopyButton: View {
         Button(action: action) {
             Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                 .font(.system(size: 11, weight: isCopied ? .semibold : .medium))
-                .foregroundStyle(isCopied ? Color.green : (isHovered ? .white.opacity(0.9) : .white.opacity(0.45)))
+                .foregroundStyle(isCopied ? AnyShapeStyle(.green) : (isHovered ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary)))
                 .frame(width: 22, height: 22)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isCopied ? Color.green.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear))
+                        .fill(isCopied ? AnyShapeStyle(Color.green.opacity(0.15)) : (isHovered ? AnyShapeStyle(.quaternary) : AnyShapeStyle(Color.clear)))
                 )
                 .contentTransition(.symbolEffect(.replace))
         }
@@ -172,7 +142,7 @@ private struct HistoryDeleteButton: View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(isHovered ? Color.red : .white.opacity(0.4))
+                .foregroundStyle(isHovered ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
                 .frame(width: 22, height: 22)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)

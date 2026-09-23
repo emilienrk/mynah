@@ -38,13 +38,12 @@ struct OnboardingView: View {
                 .padding(.horizontal, 28)
                 .padding(.vertical, 20)
 
-            Divider().opacity(0.12)
+            Divider()
 
             footer
                 .padding(16)
         }
         .frame(width: 520, height: 520)
-        .preferredColorScheme(.dark)
         .onAppear {
             checkAccessibility()
             services.settings.onboardingStepRaw = flow.step.rawValue
@@ -103,7 +102,7 @@ struct OnboardingView: View {
                             services.micPermManager.openSystemPreferences()
                         }
                         .buttonStyle(.borderless)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -122,7 +121,7 @@ struct OnboardingView: View {
 
                     Text("L'écoute clavier et le collage direct sont opérationnels.")
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.45))
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 } else {
                     Button("Ouvrir les Réglages Système") {
@@ -134,7 +133,7 @@ struct OnboardingView: View {
                         VStack(spacing: 8) {
                             Text("Une fois l'autorisation activée dans les Réglages Système, relancez Mynah pour initialiser la capture clavier.")
                                 .font(.system(size: 11))
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
 
@@ -142,7 +141,7 @@ struct OnboardingView: View {
                             // the switch stays on but no longer applies to this copy.
                             Text("Mynah est déjà coché ? Retirez-le de la liste avec −, puis ajoutez-le à nouveau.")
                                 .font(.system(size: 11))
-                                .foregroundStyle(.white.opacity(0.45))
+                                .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
 
@@ -158,7 +157,7 @@ struct OnboardingView: View {
                                     checkAccessibility()
                                 }
                                 .buttonStyle(.borderless)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -216,11 +215,11 @@ struct OnboardingView: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 19, weight: .light))
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.secondary)
                 .frame(height: 22)
             Text(label)
                 .font(.system(size: 10))
-                .foregroundStyle(.white.opacity(0.45))
+                .foregroundStyle(.secondary)
         }
         .frame(width: 78)
     }
@@ -230,7 +229,7 @@ struct OnboardingView: View {
     private var flowArrow: some View {
         Image(systemName: "chevron.compact.right")
             .font(.system(size: 15, weight: .light))
-            .foregroundStyle(.white.opacity(0.25))
+            .foregroundStyle(.tertiary)
             .padding(.bottom, 18)
     }
 
@@ -260,12 +259,12 @@ struct OnboardingView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white.opacity(0.45))
+                .foregroundStyle(.secondary)
                 .frame(width: 16)
                 .padding(.top, 1)
             Text(text)
                 .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -295,7 +294,7 @@ struct OnboardingView: View {
 
                 Text("Stratégie de décodage, accélération GPU, mémoire : dans Réglages › Moteur, le jour où vous voudrez creuser.")
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 380)
@@ -308,19 +307,11 @@ struct OnboardingView: View {
     private var vocabularyPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "text.quote")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(width: 20)
-                    .padding(.top, 1)
-
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Vocabulaire & style")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.9))
                     Text("Whisper n'obéit pas à des consignes : il imite ce qu'il lit. Donnez-lui un exemple, il en calque le vocabulaire et la ponctuation.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.35))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -352,7 +343,7 @@ struct OnboardingView: View {
             if !services.settings.initialPrompt.isEmpty {
                 Text(verbatim: services.settings.initialPrompt)
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -383,7 +374,7 @@ struct OnboardingView: View {
                             ProgressView().controlSize(.small)
                             Text("Transcription en cours…")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.secondary)
                         }
                     } else if services.coordinator.lastRunWasSilent {
                         HStack(spacing: 6) {
@@ -395,11 +386,18 @@ struct OnboardingView: View {
                         .foregroundStyle(.orange.opacity(0.9))
                         .multilineTextAlignment(.center)
                     } else {
-                        Text(services.coordinator.lastTranscription.isEmpty
-                             ? "En attente de votre première dictée…"
-                             : services.coordinator.lastTranscription)
-                            .font(.system(size: 12))
-                            .foregroundStyle(.white.opacity(services.coordinator.lastTranscription.isEmpty ? 0.3 : 0.9))
+                        // A ternary mixing a literal with a String would pick
+                        // Text(String) and skip the catalog for the placeholder.
+                        Group {
+                            if services.coordinator.lastTranscription.isEmpty {
+                                Text("En attente de votre première dictée…")
+                                    .foregroundStyle(.tertiary)
+                            } else {
+                                Text(verbatim: services.coordinator.lastTranscription)
+                                    .foregroundStyle(.primary)
+                            }
+                        }
+                        .font(.system(size: 12))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -407,11 +405,7 @@ struct OnboardingView: View {
                 .padding(10)
                 .background(
                     ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                        .fill(Color.white.opacity(0.05))
-                        .overlay(
-                            ConcentricRectangle(corners: .concentric(minimum: 8), isUniform: true)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
+                        .fill(.quinary)
                 )
 
                 // Interactive test micro button
@@ -432,15 +426,15 @@ struct OnboardingView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "command")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.5))
+                            .foregroundStyle(.secondary)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Raccourci clavier")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.85))
+                                .foregroundStyle(.primary)
                             Text("Personnalisez votre touche ou combinaison de touches.")
                                 .font(.system(size: 10))
-                                .foregroundStyle(.white.opacity(0.4))
+                                .foregroundStyle(.tertiary)
                         }
 
                         Spacer()
@@ -461,7 +455,7 @@ struct OnboardingView: View {
 
                 Text("Si votre raccourci utilise la touche dictée de macOS, désactivez-la dans les Réglages Système pour éviter les conflits.")
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 360)
@@ -470,7 +464,7 @@ struct OnboardingView: View {
                     openDictationSettings()
                 }
                 .buttonStyle(.borderless)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -501,16 +495,16 @@ struct OnboardingView: View {
             if let icon {
                 Image(systemName: icon)
                     .font(.system(size: 40, weight: .light))
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(.secondary)
             }
 
             Text(title)
                 .font(.system(size: 19, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(.primary)
 
             Text(subtitle)
                 .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: 380)
@@ -527,11 +521,7 @@ struct OnboardingView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                    )
+                    .fill(.quinary)
             )
             .containerShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
@@ -539,9 +529,9 @@ struct OnboardingView: View {
     private func statusLine(granted: Bool, text: LocalizedStringKey) -> some View {
         HStack(spacing: 6) {
             Image(systemName: granted ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(granted ? Color.green : Color.white.opacity(0.3))
+                .foregroundStyle(granted ? AnyShapeStyle(.green) : AnyShapeStyle(.tertiary))
             Text(text)
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(.primary)
         }
         .font(.system(size: 12, weight: .medium))
     }
@@ -561,14 +551,14 @@ struct OnboardingView: View {
                 HStack(spacing: 6) {
                     Text(model.name)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.primary)
                     Text(choice.tag)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.45))
+                        .foregroundStyle(.secondary)
                 }
                 Text(model.sizeInfo)
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(.tertiary)
             }
 
             Spacer()
@@ -615,13 +605,10 @@ struct OnboardingView: View {
         .padding(12)
         .background(
             ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
-                .fill(isSelected ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
+                .fill(.quinary)
                 .overlay(
                     ConcentricRectangle(corners: .concentric(minimum: 10), isUniform: true)
-                        .stroke(
-                            isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.06),
-                            lineWidth: 1
-                        )
+                        .stroke(isSelected ? Color.green.opacity(0.5) : Color.clear, lineWidth: 1)
                 )
         )
         .contentShape(Rectangle())

@@ -56,6 +56,11 @@ final class AppSettings {
         _vadEnabled            = (ud.object(forKey: "vadEnabled") as? Bool) ?? false
         _hasCompletedOnboarding = (ud.object(forKey: "hasCompletedOnboarding") as? Bool) ?? false
         _onboardingStepRaw     = ud.integer(forKey: "onboardingStep")
+        _showFloatingIndicator = (ud.object(forKey: "showFloatingIndicator") as? Bool) ?? true
+        _showTranscriptWhenNotPasted = (ud.object(forKey: "showTranscriptWhenNotPasted") as? Bool) ?? true
+        _floatingIndicatorPositionX = ud.object(forKey: "floatingIndicatorPositionX") as? Double
+        _floatingIndicatorPositionY = ud.object(forKey: "floatingIndicatorPositionY") as? Double
+
         if let data = ud.data(forKey: "favoritedModels"),
            let arr  = try? JSONDecoder().decode([String].self, from: data) {
             favoritedModelFilenames = arr
@@ -315,6 +320,42 @@ final class AppSettings {
         favoritedModelFilenames.compactMap { fn in
             WhisperModelDescriptor.catalog.first { $0.filename == fn }
         }
+    }
+
+    // MARK: - Floating Indicator (HUD)
+
+    private var _showFloatingIndicator: Bool {
+        didSet { UserDefaults.standard.set(_showFloatingIndicator, forKey: "showFloatingIndicator") }
+    }
+    /// Whether to display the native floating pill indicator on screen while recording.
+    var showFloatingIndicator: Bool {
+        get { _showFloatingIndicator }
+        set { _showFloatingIndicator = newValue }
+    }
+
+    private var _showTranscriptWhenNotPasted: Bool {
+        didSet { UserDefaults.standard.set(_showTranscriptWhenNotPasted, forKey: "showTranscriptWhenNotPasted") }
+    }
+    /// Whether the floating indicator opens into a card showing the text when it could not be pasted.
+    var showTranscriptWhenNotPasted: Bool {
+        get { _showTranscriptWhenNotPasted }
+        set { _showTranscriptWhenNotPasted = newValue }
+    }
+
+    private var _floatingIndicatorPositionX: Double? {
+        didSet { UserDefaults.standard.set(_floatingIndicatorPositionX, forKey: "floatingIndicatorPositionX") }
+    }
+    var floatingIndicatorPositionX: Double? {
+        get { _floatingIndicatorPositionX }
+        set { _floatingIndicatorPositionX = newValue }
+    }
+
+    private var _floatingIndicatorPositionY: Double? {
+        didSet { UserDefaults.standard.set(_floatingIndicatorPositionY, forKey: "floatingIndicatorPositionY") }
+    }
+    var floatingIndicatorPositionY: Double? {
+        get { _floatingIndicatorPositionY }
+        set { _floatingIndicatorPositionY = newValue }
     }
 
     // MARK: - Derived helpers

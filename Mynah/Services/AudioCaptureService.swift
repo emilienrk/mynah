@@ -80,6 +80,79 @@ final class SamplesAccumulator: Sendable {
     }
 }
 
+/// Recent input levels (0…1, one per 20 ms window), written from the tap and
+/// drained by the on-screen indicator. Bounded, so nothing piles up while the
+/// indicator is hidden and no one reads it.
+final class AudioMeterBox: Sendable {
+    static let capacity = 64
+    /// 20 ms at 16 kHz — fine enough for a waveform that follows syllables.
+    static let windowSize = 320
+
+    /// Below this, nothing is coming in at all: even a quiet room puts a
+    /// working mic's noise floor above it.
+    static let noInputDecibels: Float = -70
+
+    private let mutex = Mutex<[Float]>([])
+    private let loudest = Mutex<Float>(0)
+
+    /// Queues the levels of freshly captured samples and keeps track of the loudest.
+    func record(_ samples: [Float]) {
+        let rms = Self.windowRMS(of: samples)
+        append(rms.map(Self.level(rms:)))
+        if let peak = rms.max() {
+            loudest.withLock { $0 = max($0, peak) }
+        }
+    }
+
+    /// Whether anything above a dead input's floor came in since the last reset.
+    var hasHeardInput: Bool {
+        Self.decibels(rms: loudest.withLock { $0 }) > Self.noInputDecibels
+    }
+
+    func reset() {
+        _ = drain()
+        loudest.withLock { $0 = 0 }
+    }
+
+    func append(_ levels: [Float]) {
+        mutex.withLock { buffer in
+            buffer.append(contentsOf: levels)
+            if buffer.count > Self.capacity {
+                buffer.removeFirst(buffer.count - Self.capacity)
+            }
+        }
+    }
+
+    func drain() -> [Float] {
+        mutex.withLock { buffer in
+            defer { buffer.removeAll(keepingCapacity: true) }
+            return buffer
+        }
+    }
+
+    /// Maps RMS onto a dB scale: speech sits around -35…-15 dBFS, which a
+    /// linear scale would squash near zero.
+    static func level(rms: Float) -> Float {
+        min(1, max(0, (decibels(rms: rms) + 55) / 45))
+    }
+
+    static func decibels(rms: Float) -> Float {
+        20 * log10(max(rms, 1e-6))
+    }
+
+    static func levels(of samples: [Float]) -> [Float] {
+        windowRMS(of: samples).map(level(rms:))
+    }
+
+    private static func windowRMS(of samples: [Float]) -> [Float] {
+        stride(from: 0, to: samples.count, by: windowSize).map { start in
+            let window = samples[start..<min(start + windowSize, samples.count)]
+            let sumOfSquares = window.reduce(0) { $0 + $1 * $1 }
+            return (sumOfSquares / Float(window.count)).squareRoot()
+        }
+    }
+}
+
 /// Spots a capture that died without a configuration change being posted.
 /// Silence still delivers buffers, so a count that stops growing means the tap
 /// is no longer fed — not that the user went quiet.
@@ -122,6 +195,7 @@ final class AudioCaptureService {
     private var converter: AVAudioConverter?
     /// Thread-safe accumulator — written from realtime tap, drained in stopRecording().
     private let accumulator = SamplesAccumulator()
+    private let meterBox = AudioMeterBox()
 
     private let tapBufferSize: AVAudioFrameCount = 4096
 
@@ -148,6 +222,7 @@ final class AudioCaptureService {
         stallDetector.reset()
         // Drain any leftover samples from a previous session.
         _ = accumulator.drainAll()
+        meterBox.reset()
 
         try launchEngine()
 
@@ -263,6 +338,17 @@ final class AudioCaptureService {
         onInputLost?()
     }
 
+    /// Input levels captured since the last call, oldest first.
+    func drainLevels() -> [Float] {
+        meterBox.drain()
+    }
+
+    /// False while the input has delivered nothing but a dead signal — a muted
+    /// or disconnected mic, or the wrong one selected.
+    var hasHeardInput: Bool {
+        meterBox.hasHeardInput
+    }
+
     private func setupEngine() throws {
         audioEngine = AVAudioEngine()
         let inputNode = audioEngine.inputNode
@@ -287,7 +373,8 @@ final class AudioCaptureService {
         let tapBlock = Self.createTapBlock(
             converter: conv,
             outputFrameCapacity: outputFrameCapacity,
-            accumulator: accumulator
+            accumulator: accumulator,
+            meterBox: meterBox
         )
 
         inputNode.installTap(onBus: 0, bufferSize: tapBufferSize, format: nativeFormat, block: tapBlock)
@@ -299,14 +386,16 @@ final class AudioCaptureService {
     nonisolated private static func createTapBlock(
         converter: AVAudioConverter,
         outputFrameCapacity: AVAudioFrameCount,
-        accumulator: SamplesAccumulator
+        accumulator: SamplesAccumulator,
+        meterBox: AudioMeterBox
     ) -> AVAudioNodeTapBlock {
         return { buffer, _ in
             AudioCaptureService.convertAndAccumulate(
                 buffer,
                 converter: converter,
                 outputFrameCapacity: outputFrameCapacity,
-                into: accumulator
+                into: accumulator,
+                meterBox: meterBox
             )
         }
     }
@@ -317,7 +406,8 @@ final class AudioCaptureService {
         _ inputBuffer: AVAudioPCMBuffer,
         converter: AVAudioConverter,
         outputFrameCapacity: AVAudioFrameCount,
-        into accumulator: SamplesAccumulator
+        into accumulator: SamplesAccumulator,
+        meterBox: AudioMeterBox
     ) {
         guard let outputBuffer = AVAudioPCMBuffer(
             pcmFormat: kWhisperAudioFormat,
@@ -344,6 +434,7 @@ final class AudioCaptureService {
         let frameCount = Int(outputBuffer.frameLength)
         let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
         accumulator.append(samples)
+        meterBox.record(samples)
     }
 }
 

@@ -86,6 +86,40 @@ struct GeneralSection: View {
                 )
             }
 
+            Section("Indicateur à l'écran") {
+                SettingsToggleRow(
+                    label: "Afficher l'indicateur flottant",
+                    description: "Affiche en bas de l'écran une capsule avec l'onde sonore, le temps écoulé et des boutons pour arrêter ou annuler.",
+                    isOn: $settings.showFloatingIndicator
+                )
+
+                if settings.showFloatingIndicator {
+                    SettingsToggleRow(
+                        label: "Afficher le texte s'il n'a pas pu être collé",
+                        description: "Quand aucun champ de texte n'est actif, ou que le collage automatique est coupé, l'indicateur montre le texte copié.",
+                        isOn: $settings.showTranscriptWhenNotPasted
+                    )
+
+                    if settings.floatingIndicatorPositionX != nil {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Position personnalisée")
+                                Text("L'indicateur a été déplacé à la main.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Réinitialiser") {
+                                settings.floatingIndicatorPositionX = nil
+                                settings.floatingIndicatorPositionY = nil
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    }
+                }
+            }
+
             Section("Système") {
                 SettingsToggleRow(
                     label: "Démarrer au login",

@@ -5,6 +5,7 @@
 // Ensures thread safety for the C API (exclusive access per context).
 
 import Foundation
+import Synchronization
 
 enum WhisperServiceError: Error, LocalizedError {
     case modelNotFound(path: String)
@@ -40,6 +41,15 @@ struct WhisperEngineConfig: Sendable {
         vadEnabled: false,
         vadModelPath: nil
     )
+}
+
+/// Raised from the cancelling thread; whisper.cpp polls it between encoder and decoder passes.
+private final class AbortFlag: Sendable {
+    private let mutex = Mutex(false)
+
+    var isRaised: Bool { mutex.withLock { $0 } }
+
+    func raise() { mutex.withLock { $0 = true } }
 }
 
 /// Main actor managing the whisper_context.
@@ -107,7 +117,8 @@ actor WhisperService {
     var isModelLoaded: Bool { context != nil }
 
     /// Transcribes a 16kHz mono Float32 audio buffer using the provided engine config.
-    func transcribe(samples: [Float], config: WhisperEngineConfig = .default) throws -> String {
+    /// Cancelling the calling task stops whisper.cpp at its next pass and throws `CancellationError`.
+    func transcribe(samples: [Float], config: WhisperEngineConfig = .default) async throws -> String {
         guard let ctx = context else { throw WhisperServiceError.noModelLoaded }
 
         // Leave 2 cores free, max 8 to prevent scaling issues.
@@ -128,7 +139,7 @@ actor WhisperService {
             free(cVadPath)
         }
 
-        let params = Self.makeParams(
+        var params = Self.makeParams(
             config: config,
             maxThreads: maxThreads,
             strategy: strategy,
@@ -137,10 +148,25 @@ actor WhisperService {
             cVadPath: UnsafePointer(cVadPath)
         )
 
-        var result: Int32 = 0
-        samples.withUnsafeBufferPointer { buf in
-            result = whisper_full(ctx, params, buf.baseAddress, Int32(buf.count))
+        // One flag per call, so a late cancel of a previous dictation cannot abort this one.
+        let abortFlag = AbortFlag()
+        params.abort_callback = { data in
+            guard let data else { return false }
+            return Unmanaged<AbortFlag>.fromOpaque(data).takeUnretainedValue().isRaised
         }
+        params.abort_callback_user_data = Unmanaged.passUnretained(abortFlag).toOpaque()
+
+        let result: Int32 = try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return withExtendedLifetime(abortFlag) {
+                samples.withUnsafeBufferPointer { buf in
+                    whisper_full(ctx, params, buf.baseAddress, Int32(buf.count))
+                }
+            }
+        } onCancel: {
+            abortFlag.raise()
+        }
+        if abortFlag.isRaised { throw CancellationError() }
         if result != 0 { throw WhisperServiceError.transcriptionFailed }
 
         return extractTranscription(from: ctx)

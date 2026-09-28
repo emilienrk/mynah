@@ -30,6 +30,24 @@ enum PipelineState: Equatable {
     }
 }
 
+// MARK: - Dictation Outcome
+
+/// How a dictation ended. Held past the return to `.idle`, which can follow
+/// `.pasting` too closely for an observer to ever see the latter — when there
+/// is nothing to paste into, nothing in between suspends.
+struct DictationOutcome: Equatable {
+    enum Kind: Equatable {
+        /// The paste result is nil when the text was not handed to the
+        /// clipboard at all — the onboarding test run.
+        case transcribed(String, PasteResult?)
+        case silent
+    }
+
+    /// Tells two identical outcomes in a row apart.
+    let id: Int
+    let kind: Kind
+}
+
 // MARK: - RecordingCoordinator
 
 @MainActor
@@ -38,12 +56,24 @@ final class RecordingCoordinator {
 
     // MARK: Observed state
 
-    private(set) var pipelineState: PipelineState = .idle
+    private(set) var pipelineState: PipelineState = .idle {
+        didSet {
+            switch pipelineState {
+            case .loadingModel, .recording, .transcribing: hotkeyManager.setCancelArmed(true)
+            case .idle, .pasting, .error: hotkeyManager.setCancelArmed(false)
+            }
+        }
+    }
     private(set) var lastTranscription: String = ""
     /// True when the last run transcribed successfully but produced nothing. Distinct
     /// from "never ran": callers must be able to say so instead of looking idle.
     private(set) var lastRunWasSilent: Bool = false
     private(set) var lastError: String?
+    /// When the mic opened. Set before the model finishes loading, so a timer
+    /// shown from here does not restart when the state moves on to `.recording`.
+    private(set) var recordingStartedAt: Date?
+    /// Set when a dictation ends with a result — not when it is cancelled or fails.
+    private(set) var lastOutcome: DictationOutcome?
 
     // MARK: Services (injected)
 
@@ -124,6 +154,9 @@ final class RecordingCoordinator {
             guard let self else { return }
             self.onHotkeyUp()
         }
+        hotkeyManager.onCancel = { [weak self] in
+            self?.cancelRecording()
+        }
     }
 
     // MARK: - Push-to-Talk lifecycle
@@ -174,12 +207,15 @@ final class RecordingCoordinator {
             setError(String(localized: "Micro : \(error.localizedDescription)"))
             return
         }
+        recordingStartedAt = Date()
+        lastRunWasSilent = false
 
         // --- Load model concurrently while the user speaks ---
         pipelineState = .loadingModel
         do {
             try await whisperService.loadModel(at: modelURL, language: language, useGPU: AppSettings.shared.useGPU)
         } catch {
+            guard !Task.isCancelled else { return }
             _ = audioCapture.stopRecording()
             setError(String(localized: "Chargement modèle : \(error.localizedDescription)"))
             return
@@ -187,12 +223,12 @@ final class RecordingCoordinator {
 
         // The recording may have ended while the model loaded — key released
         // early, or the input lost. Going back to .recording would restart the
-        // counter over a closed mic.
-        guard pipelineState == .loadingModel else { return }
+        // counter over a closed mic. A cancelled run must also not take over the
+        // `.loadingModel` of a dictation started right after it.
+        guard !Task.isCancelled, pipelineState == .loadingModel else { return }
 
         // Model is ready; transition to active recording state.
         pipelineState = .recording
-        lastRunWasSilent = false
         startRecordingWatchdog()
         logger.info("Pipeline started — recording…")
     }
@@ -201,6 +237,10 @@ final class RecordingCoordinator {
     func finishRecording() {
         guard pipelineState == .recording || pipelineState == .loadingModel else { return }
         stopRecordingWatchdog()
+        // Stops from the HUD, a notification or a lost input bypass the hotkey,
+        // which would otherwise need a second press to realise it is off.
+        hotkeyManager.resetToggle()
+        recordingStartedAt = nil
 
         let samples = audioCapture.stopRecording()
 
@@ -222,21 +262,46 @@ final class RecordingCoordinator {
         // the recording is over.
         pipelineState = .transcribing
         // Run phases 2-4 in a Task to keep the UI responsive.
-        Task { await runTranscriptionAndPaste(samples: samples) }
+        pipelineTask = Task { await runTranscriptionAndPaste(samples: samples) }
+    }
+
+    /// Drops the dictation — recording or transcription — without pasting or saving history.
+    func cancelRecording() {
+        switch pipelineState {
+        case .loadingModel, .recording:
+            stopRecordingWatchdog()
+            hotkeyManager.resetToggle()
+            recordingStartedAt = nil
+            _ = audioCapture.stopRecording()
+            Task { await mediaPlayback.resumeAfterRecording() }
+        case .transcribing:
+            break
+        case .idle, .pasting, .error:
+            return
+        }
+        logger.info("Dictation cancelled")
+        // Cancelling aborts whisper.cpp mid-run; the task then returns without
+        // touching the state, which may already belong to the next dictation.
+        pipelineTask?.cancel()
+        pipelineTask = nil
+        unloadModel()
+        pipelineState = .idle
     }
 
     private func runTranscriptionAndPaste(samples: [Float]) async {
         // Phase 2: Transcription
-        pipelineState = .transcribing
         let engineConfig = AppSettings.shared.engineConfig
         let text: String
         do {
             text = try await whisperService.transcribe(samples: samples, config: engineConfig)
         } catch {
+            guard !Task.isCancelled else { return }
             setError(String(localized: "Transcription : \(error.localizedDescription)"))
             unloadModel()
             return
         }
+
+        guard !Task.isCancelled else { return }
 
         logger.info("Transcription OK: \(text.prefix(80), privacy: .private)")
 
@@ -245,7 +310,7 @@ final class RecordingCoordinator {
 
         guard !text.isEmpty else {
             lastRunWasSilent = true
-            pipelineState = .idle
+            endRun(with: .silent)
             return
         }
 
@@ -255,16 +320,24 @@ final class RecordingCoordinator {
 
         FeedbackSound.finished.play()
 
+        var pasteResult: PasteResult?
         if AppSettings.shared.hasCompletedOnboarding {
             let result = await clipboardService.copyAndPaste(text)
             logger.info("Paste result: \(String(describing: result), privacy: .public)")
-            
+            pasteResult = result
+
             // Save to history
             historyService.add(text)
         } else {
             logger.info("Skipping paste and history during onboarding test")
         }
 
+        endRun(with: .transcribed(text, pasteResult))
+    }
+
+    /// Records the outcome before going idle, so an observer woken by `.idle` finds it.
+    private func endRun(with kind: DictationOutcome.Kind) {
+        lastOutcome = DictationOutcome(id: (lastOutcome?.id ?? 0) + 1, kind: kind)
         pipelineState = .idle
     }
 
@@ -280,12 +353,16 @@ final class RecordingCoordinator {
                 await whisperService.unloadModel()
             }
         } else {
-            unloadTask = Task { await whisperService.unloadModel() }
+            unloadTask = Task {
+                guard !Task.isCancelled else { return }
+                await whisperService.unloadModel()
+            }
         }
     }
 
     private func setError(_ message: String) {
         stopRecordingWatchdog()
+        recordingStartedAt = nil
         lastError = message
         pipelineState = .error(message)
         logger.error("Pipeline error: \(message, privacy: .public)")

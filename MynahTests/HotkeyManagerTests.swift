@@ -27,6 +27,43 @@ struct HotkeyManagerTests {
         }
     }
 
+    // MARK: - Escape cancels a dictation
+
+    @Test("Escape is swallowed and cancels only while a dictation is armed")
+    func escapeCancelsWhenArmed() async {
+        let manager = HotkeyManager()
+        var cancels = 0
+        manager.onCancel = { cancels += 1 }
+
+        let idle = manager.handleRawEvent(type: .keyDown, event: keyEvent(53, down: true))
+        #expect(idle != nil, "Escape must reach other apps when nothing is recording")
+
+        manager.setCancelArmed(true)
+        let down = manager.handleRawEvent(type: .keyDown, event: keyEvent(53, down: true))
+        let up   = manager.handleRawEvent(type: .keyUp,   event: keyEvent(53, down: false))
+        await drainMainQueue()
+
+        #expect(down == nil && up == nil)
+        #expect(cancels == 1)
+    }
+
+    @Test("Escape with a modifier, or bound as the shortcut, is not taken for cancel")
+    func escapeLeftAloneOtherwise() async {
+        let manager = HotkeyManager()
+        var cancels = 0
+        manager.onCancel = { cancels += 1 }
+        manager.setCancelArmed(true)
+
+        let withCommand = manager.handleRawEvent(type: .keyDown, event: keyEvent(53, down: true, flags: .maskCommand))
+        #expect(withCommand != nil)
+
+        manager.updateHotKey(HotKey(keyCode: 53, modifiers: 0))
+        _ = manager.handleRawEvent(type: .keyDown, event: keyEvent(53, down: true))
+        await drainMainQueue()
+
+        #expect(cancels == 0)
+    }
+
     // MARK: - Bug 1: Plain space broken when ⌥Space is bound
 
     @Test("Plain space passes through tap when ⌥Space is bound (no active recording)")

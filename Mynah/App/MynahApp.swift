@@ -32,7 +32,11 @@ final class ServicesContainer: ObservableObject {
     let hotkeyManager    = HotkeyManager()
     let audioCapture     = AudioCaptureService()
     let whisperService   = WhisperService()
-    let clipboardService = ClipboardService()
+    let clipboardService = ClipboardService(notifyCopied: {
+        // The floating indicator shows the text itself when it could not be pasted.
+        guard !AppSettings.shared.showFloatingIndicator else { return }
+        await sendCopiedNotification()
+    })
     let mediaPlayback = MediaPlaybackController(
         probe: CoreAudioProcessProbe(),
         keySender: SystemMediaKeySender(),
@@ -59,6 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let servicesContainer = ServicesContainer()
 
     private var statusBar: StatusBarController!
+    private var floatingIndicator: FloatingIndicatorController!
     private var iconTask: Task<Void, Never>?
     private var appearanceTask: Task<Void, Never>?
 
@@ -100,7 +105,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             servicesContainer: sc
         )
 
-        // Observe pipeline state → update icon.
+        // Build the floating indicator controller.
+        floatingIndicator = FloatingIndicatorController(
+            coordinator: sc.coordinator,
+            audioCapture: sc.audioCapture,
+            settings: sc.settings
+        )
+
+        // Observe pipeline state → update icon and floating HUD.
         observePipelineState()
         observeAppearance()
 
@@ -146,6 +158,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let coordinator = self.servicesContainer.coordinator
             for await state in Observations({ coordinator.pipelineState }) {
                 self.statusBar.updateIcon(for: state)
+                self.floatingIndicator.update(for: state)
             }
         }
     }

@@ -129,6 +129,8 @@ private struct TapSharedState {
     var isCapturing: Bool    = false
     /// Modifier held down during capture (bound standalone upon release).
     var pendingCaptureModifier: Int?
+    /// True while a dictation can be cancelled: Escape is taken only then.
+    var isCancelArmed: Bool  = false
     var eventTap: CFMachPort?
 }
 
@@ -159,6 +161,7 @@ final class HotkeyManager {
 
     var onKeyDown: (@MainActor () -> Void)?
     var onKeyUp:   (@MainActor () -> Void)?
+    var onCancel:  (@MainActor () -> Void)?
 
     // MARK: - Tap infrastructure
     // `let` property — @Observable does NOT generate observation tracking for `let`.
@@ -278,6 +281,17 @@ final class HotkeyManager {
         tapBox.tapState.isToggledOn = false
     }
 
+    /// Arms Escape as the cancel key for the dictation in progress.
+    func setCancelArmed(_ armed: Bool) {
+        tapBox.tapState.isCancelArmed = armed
+    }
+
+    /// Toggle mode tracks on/off itself; a dictation ended elsewhere must reset
+    /// it, or the next press is spent turning off a recording that is already over.
+    func resetToggle() {
+        tapBox.tapState.isToggledOn = false
+    }
+
     // MARK: - Hotkey capture (settings recorder)
 
     /// Capture completion delivered on MainActor. Nil means cancelled (Escape).
@@ -379,6 +393,8 @@ final class HotkeyManager {
 
     // MARK: - Event handling (called from tap thread — nonisolated)
 
+    private nonisolated static let escapeKeyCode = 53
+
     nonisolated func handleRawEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let tap = tapBox.tapState.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
@@ -431,6 +447,20 @@ final class HotkeyManager {
                 maskedFlags: eventFlagsRaw,
                 isModifierDown: isModifierDown
             )
+        }
+
+        // Escape cancels a dictation in progress. Swallowed only then, so it
+        // keeps closing dialogs everywhere else — and left alone when it is
+        // the shortcut itself.
+        if eventKeyCode == Self.escapeKeyCode, targetKeyCode != Self.escapeKeyCode,
+           tapBox.tapState.isCancelArmed, eventFlagsRaw == 0,
+           type == .keyDown || type == .keyUp {
+            if type == .keyDown {
+                DispatchQueue.main.async { [weak self] in
+                    self?.onCancel?()
+                }
+            }
+            return nil
         }
 
         // Only act if this is the target shortcut key.

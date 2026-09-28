@@ -105,6 +105,7 @@ targets:
       - path: Mynah/Services/SystemSoundLibrary.swift
       - path: Mynah/Services/NotificationService.swift
       - path: Mynah/Services/Logging.swift
+      - path: Mynah/Utilities/WaveformPlayback.swift
       - path: Mynah/Bridge
     settings:
       base:

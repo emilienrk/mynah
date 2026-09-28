@@ -263,17 +263,28 @@ final class StatusBarController: NSObject {
             button.contentTintColor = nil
 
         case .loadingModel, .recording:
-            button.image = nil
-            button.contentTintColor = nil
-            
-            if recordingTimer == nil {
-                button.title = "0:00"
-                recordingStartTime = Date()
-                let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-                    MainActor.assumeIsolated { self?.updateRecordingTimer() }
+            // The indicator shows the time already; counting here too would
+            // widen the status item and shift every icon to its left.
+            if settings.showFloatingIndicator {
+                recordingTimer?.invalidate()
+                recordingTimer = nil
+                button.title = ""
+                // Monochrome: macOS already shows its orange mic pill right next to it.
+                button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: String(localized: "Enregistrement…"))?.withSymbolConfiguration(config)
+                button.contentTintColor = nil
+            } else {
+                button.image = nil
+                button.contentTintColor = nil
+
+                if recordingTimer == nil {
+                    button.title = "0:00"
+                    recordingStartTime = Date()
+                    let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+                        MainActor.assumeIsolated { self?.updateRecordingTimer() }
+                    }
+                    RunLoop.current.add(t, forMode: .common)
+                    recordingTimer = t
                 }
-                RunLoop.current.add(t, forMode: .common)
-                recordingTimer = t
             }
 
         case .transcribing:

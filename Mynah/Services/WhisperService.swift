@@ -230,6 +230,6 @@ actor WhisperService {
             }
         }
 
-        return result.trimmingCharacters(in: .whitespaces)
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

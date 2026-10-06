@@ -7,7 +7,10 @@
 
 import AppKit
 import ApplicationServices
+import os
 import UserNotifications
+
+private let logger = Logger(category: "Clipboard")
 
 // MARK: - Paste Result
 
@@ -24,15 +27,14 @@ enum PasteResult {
 enum FocusState {
     case editable
     case notEditable
-    /// Nothing usable exposed — deliberately distinct from `notEditable`, since
-    /// Electron apps and web views routinely report an unhelpful element for a
-    /// perfectly good text field.
+    /// Nothing usable exposed. Electron apps and web views can report this for
+    /// a perfectly good text field, but so does an app with no field at all —
+    /// the paste treats it as no field.
     case unknown
 }
 
 /// Reads the system-wide focused element. Only an element that is present *and*
-/// clearly not editable answers `notEditable`; anything unreadable is `unknown`,
-/// so an app the API cannot describe still gets its paste.
+/// clearly not editable answers `notEditable`; anything unreadable is `unknown`.
 @MainActor
 func systemFocusState() -> FocusState {
     let system = AXUIElementCreateSystemWide()
@@ -58,6 +60,41 @@ func systemFocusState() -> FocusState {
         kAXTextFieldRole, kAXTextAreaRole, kAXComboBoxRole, "AXSearchField", "AXWebArea"
     ]
     return editableRoles.contains(roleName) ? .editable : .notEditable
+}
+
+// MARK: - Chromium & Electron
+
+/// Chromium and Electron build their accessibility tree only when asked, and
+/// until then report no focused element at all: a real text field and no field
+/// look the same, and the paste goes out blind. `AXManualAccessibility` is the
+/// request Electron documents for assistive apps. The tree is built
+/// asynchronously, so this runs when the dictation starts, not at paste time;
+/// the mode then sticks for the app's lifetime.
+@MainActor
+enum AccessibilityWaker {
+    private static var checked: Set<pid_t> = []
+
+    static func wakeFrontmostApp() {
+        guard AXIsProcessTrusted(),
+              let app = NSWorkspace.shared.frontmostApplication,
+              checked.insert(app.processIdentifier).inserted
+        else { return }
+        let pid = app.processIdentifier
+        let name = app.localizedName ?? "?"
+
+        Task.detached(priority: .utility) {
+            let element = AXUIElementCreateApplication(pid)
+            // Served on the target's main thread: a hung app must not hold the dictation.
+            AXUIElementSetMessagingTimeout(element, 1.5)
+            var focused: CFTypeRef?
+            // Apps that already answer — native ones, or one VoiceOver woke — are left alone.
+            guard AXUIElementCopyAttributeValue(
+                element, kAXFocusedUIElementAttribute as CFString, &focused
+            ) == .noValue else { return }
+            let result = AXUIElementSetAttributeValue(element, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+            logger.info("Accessibility wake of \(name, privacy: .public): \(result.rawValue, privacy: .public)")
+        }
+    }
 }
 
 // MARK: - ClipboardService
@@ -99,10 +136,14 @@ final class ClipboardService {
         // 1. Write to the pasteboard.
         let changeCount = copyToClipboard(text)
 
-        // 2. Attempt auto-paste if requested. Pressing ⌘V with nothing editable
-        // focused makes macOS play its rejection beep, so skip it in that case —
-        // the text still reaches the clipboard through the fallback below.
-        if autoPasteEnabled && AXIsProcessTrusted() && focusState() != .notEditable {
+        // 2. Attempt auto-paste if requested, and only into a field we can see.
+        // A blind paste into an app that describes nothing — Brave with no field
+        // selected, the Desktop — lands nowhere, yet reads as "pasted" and puts
+        // the clipboard back: the text is lost. Copying it instead costs a ⌘V
+        // in the apps that hide a real field, and loses nothing.
+        let focus = autoPasteEnabled && AXIsProcessTrusted() ? focusState() : nil
+        if let focus { logger.info("Focused element: \(String(describing: focus), privacy: .public)") }
+        if focus == .editable {
             let success = await simulatePaste()
             if success {
                 // The target app reads the pasteboard on its own run loop; restoring

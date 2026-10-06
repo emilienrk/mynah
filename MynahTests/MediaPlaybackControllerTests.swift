@@ -4,12 +4,18 @@
 import Testing
 
 private func player(_ pid: pid_t, _ bundleID: String = "com.spotify.client") -> AudioProcess {
-    AudioProcess(pid: pid, bundleID: bundleID, isCapturingInput: false)
+    AudioProcess(pid: pid, bundleID: bundleID, capture: .none)
 }
 
 /// A call detected the way FaceTime is: playing and capturing at once.
 private func call(_ pid: pid_t, _ bundleID: String = "com.apple.avconferenced") -> AudioProcess {
-    AudioProcess(pid: pid, bundleID: bundleID, isCapturingInput: true)
+    AudioProcess(pid: pid, bundleID: bundleID, capture: .microphone)
+}
+
+/// A per-app volume mixer: it taps every app's audio and plays it back, with
+/// no microphone open.
+private func relay(_ pid: pid_t, _ bundleID: String = "com.vorssaint.utils") -> AudioProcess {
+    AudioProcess(pid: pid, bundleID: bundleID, capture: .appAudio)
 }
 
 @MainActor
@@ -29,6 +35,7 @@ private final class FakeProcessProbe: AudioProcessProbe {
 
 @MainActor
 private final class FakeMediaKeySender: MediaKeySender {
+    var canSend = true
     private(set) var sendCount = 0
     func sendPlayPause() { sendCount += 1 }
 }
@@ -64,6 +71,17 @@ private func makeController(
     return (controller, probe, sender)
 }
 
+/// The verification runs on its own after the key: waits for it to settle
+/// rather than for a fixed time that scheduling jitter could overrun.
+@MainActor
+private func eventually(_ condition: @MainActor () -> Bool) async -> Bool {
+    for _ in 0..<200 {
+        if condition() { return true }
+        try? await Task.sleep(for: .milliseconds(5))
+    }
+    return condition()
+}
+
 
 @MainActor
 struct MediaPlaybackControllerTests {
@@ -83,7 +101,19 @@ struct MediaPlaybackControllerTests {
     @Test("A plain player, and one with no bundle ID, are players")
     func everythingElseIsAPlayer() {
         #expect(classify(player(1)) == .player)
-        #expect(classify(AudioProcess(pid: 1, bundleID: nil, isCapturingInput: false)) == .player)
+        #expect(classify(AudioProcess(pid: 1, bundleID: nil, capture: .none)) == .player)
+    }
+
+    @Test("Capturing other apps' audio with no microphone open is a relay, not a call")
+    func appAudioCaptureIsARelay() {
+        // A volume mixer runs input and output whenever music plays; read as a
+        // call, it kept Mynah from ever pausing the music.
+        #expect(classify(relay(1)) == .relay)
+    }
+
+    @Test("A listed communication app stays a call whatever it captures")
+    func listedBundleWinsOverRelay() {
+        #expect(classify(relay(1, "us.zoom.xos")) == .communication)
     }
 
     // MARK: - Ignored sources
@@ -114,7 +144,7 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == false)
         #expect(sender.sendCount == 0)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(sender.sendCount == 0)
     }
 
@@ -125,7 +155,7 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == false)
         #expect(sender.sendCount == 0)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(sender.sendCount == 0)
     }
 
@@ -133,7 +163,7 @@ struct MediaPlaybackControllerTests {
     func callWinsOverMusic() async {
         let (controller, _, sender) = makeController(readings: [[player(10), call(42)]])
         controller.pauseForRecording()
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
 
         #expect(controller.didPause == false)
         #expect(sender.sendCount == 0)
@@ -146,8 +176,44 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == true)
         #expect(sender.sendCount == 1)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(controller.didPause == false)
+        #expect(sender.sendCount == 2)
+    }
+
+    @Test("A relay alongside music: the music is paused and resumed")
+    func relayDoesNotHoldBackThePause() async {
+        let (controller, _, sender) = makeController(readings: [[relay(5), player(10)], [relay(5), player(10)]])
+        controller.pauseForRecording()
+        #expect(controller.didPause == true)
+        #expect(sender.sendCount == 1)
+
+        await controller.resumeAfterRecording().value
+        #expect(sender.sendCount == 2)
+    }
+
+    @Test("A relay alone is not something playing: no key is sent")
+    func relayAloneSendsNothing() async {
+        // Its output is another app's audio; on its own, the key would start
+        // whatever paused player is the now-playing app.
+        let (controller, _, sender) = makeController(readings: [[relay(5)]])
+        controller.pauseForRecording()
+        await controller.resumeAfterRecording().value
+
+        #expect(controller.didPause == false)
+        #expect(sender.sendCount == 0)
+    }
+
+    @Test("A relay that reads as capturing once our mic opens is not a woken player")
+    func relayAfterMicOpensIsNotASpuriousStart() async {
+        // The verification runs with our own microphone open, so the relay's
+        // capture now reads as a microphone one. It was outputting all along.
+        let (controller, _, sender) = makeController(
+            readings: [[relay(5), player(10)], [AudioProcess(pid: 5, bundleID: "com.vorssaint.utils", capture: .microphone), player(10)]]
+        )
+        controller.pauseForRecording()
+        await controller.resumeAfterRecording().value
+
         #expect(sender.sendCount == 2)
     }
 
@@ -157,7 +223,7 @@ struct MediaPlaybackControllerTests {
         // proof of silence would strand the music paused forever.
         let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
         controller.pauseForRecording()
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
 
         #expect(sender.sendCount == 2)
     }
@@ -174,7 +240,7 @@ struct MediaPlaybackControllerTests {
         controller.pauseForRecording()
         #expect(sender.sendCount == 1)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         // One key to pause, one to undo — and no third key on resume.
         #expect(sender.sendCount == 2)
         #expect(controller.didPause == false)
@@ -184,7 +250,7 @@ struct MediaPlaybackControllerTests {
     func unchangedProcessesAreNotASpuriousStart() async {
         let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
         controller.pauseForRecording()
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
 
         #expect(sender.sendCount == 2)
     }
@@ -195,7 +261,7 @@ struct MediaPlaybackControllerTests {
     func disabledSettingIsInert() async {
         let (controller, probe, sender) = makeController(readings: [[player(10)]], enabled: false)
         controller.pauseForRecording()
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
 
         #expect(probe.readCount == 0)
         #expect(sender.sendCount == 0)
@@ -206,16 +272,48 @@ struct MediaPlaybackControllerTests {
     func doubleResumeIsIdempotent() async {
         let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
         controller.pauseForRecording()
-        await controller.resumeAfterRecording()
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
+        await controller.resumeAfterRecording().value
 
         #expect(sender.sendCount == 2)
+    }
+
+    @Test("A dictation started while the last resume awaits the check keeps the music paused")
+    func resumeOvertakenByNextDictationStaysSilent() async {
+        // A ends inside the verification window and B starts right after: A's
+        // resume, still waiting, must not bring the music back in B.
+        let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
+        controller.pauseForRecording()
+        let resumeOfA = controller.resumeAfterRecording()
+        controller.pauseForRecording()
+
+        await resumeOfA.value
+        #expect(sender.sendCount == 1)
+        #expect(controller.didPause == true)
+        #expect(controller.pauseStatus == .paused)
+
+        await controller.resumeAfterRecording().value
+        #expect(sender.sendCount == 2)
+        #expect(controller.pauseStatus == .idle)
+    }
+
+    @Test("A warning from the last dictation does not carry over to the next")
+    func blockedStatusDoesNotLeakIntoNextDictation() async {
+        let (controller, _, sender) = makeController(readings: [[player(10)], []])
+        sender.canSend = false
+        controller.pauseForRecording()
+        #expect(controller.pauseStatus == .blocked)
+
+        // The next one starts before the last resume has run.
+        controller.resumeAfterRecording()
+        controller.pauseForRecording()
+        #expect(controller.pauseStatus == .idle)
     }
 
     @Test("Resume without a preceding pause does nothing")
     func resumeWithoutPauseIsNoOp() async {
         let (controller, probe, sender) = makeController(readings: [[]])
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
 
         #expect(probe.readCount == 0)
         #expect(sender.sendCount == 0)
@@ -233,7 +331,7 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == true)
         #expect(sender.sendCount == 1)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(sender.sendCount == 2)
     }
 
@@ -250,7 +348,7 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == false)
         #expect(sender.sendCount == 0)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(sender.sendCount == 0)
     }
 
@@ -265,7 +363,62 @@ struct MediaPlaybackControllerTests {
         #expect(controller.didPause == true)
         #expect(sender.sendCount == 1)
 
-        await controller.resumeAfterRecording()
+        await controller.resumeAfterRecording().value
         #expect(sender.sendCount == 2)
+    }
+
+    // MARK: - Indicator
+
+    @Test("A pause is shown once the key is verified, and cleared by the resume")
+    func confirmedPauseIsShownUntilResume() async {
+        let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
+        controller.pauseForRecording()
+        // Not before the check: the key may yet have to be undone.
+        #expect(controller.pauseStatus == .idle)
+
+        #expect(await eventually { controller.pauseStatus == .paused })
+
+        await controller.resumeAfterRecording().value
+        #expect(controller.pauseStatus == .idle)
+        #expect(sender.sendCount == 2)
+    }
+
+    @Test("A pause undone by the verification is never shown")
+    func undonePauseIsNeverShown() async {
+        let (controller, _, sender) = makeController(
+            readings: [[player(10, "com.google.Chrome")], [player(10, "com.google.Chrome"), player(99)]]
+        )
+        controller.pauseForRecording()
+
+        #expect(await eventually { sender.sendCount == 2 })
+        #expect(controller.pauseStatus == .idle)
+    }
+
+    // MARK: - No Accessibility
+
+    @Test("Without Accessibility: no key, no claimed pause, a warning until the resume")
+    func missingPermissionIsReportedNotFaked() async {
+        // The system drops the key silently, and players keep their output
+        // alive after a pause: the verification would have confirmed it.
+        let (controller, _, sender) = makeController(readings: [[player(10)], [player(10)]])
+        sender.canSend = false
+        controller.pauseForRecording()
+
+        #expect(sender.sendCount == 0)
+        #expect(controller.didPause == false)
+        #expect(controller.pauseStatus == .blocked)
+
+        await controller.resumeAfterRecording().value
+        #expect(sender.sendCount == 0)
+        #expect(controller.pauseStatus == .idle)
+    }
+
+    @Test("Without Accessibility and nothing playing: nothing to warn about")
+    func missingPermissionWithNothingPlayingStaysQuiet() async {
+        let (controller, _, sender) = makeController(readings: [[]])
+        sender.canSend = false
+        controller.pauseForRecording()
+
+        #expect(controller.pauseStatus == .idle)
     }
 }

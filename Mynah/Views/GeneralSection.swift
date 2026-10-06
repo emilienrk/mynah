@@ -84,6 +84,26 @@ struct GeneralSection: View {
                     description: "Coupe la lecture en cours pendant la dictée, puis la relance.",
                     isOn: $settings.pauseMediaWhileRecording
                 )
+
+                // The media key is dropped without a word: say it here rather
+                // than let the switch look like it works.
+                if settings.pauseMediaWhileRecording && !hotkeyManager.hasAccessibilityPermission {
+                    HStack {
+                        Label {
+                            Text("Sans l'autorisation Accessibilité, Mynah ne peut pas mettre la musique en pause.")
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Ouvrir les Réglages") {
+                            hotkeyManager.openAccessibilityPreferences()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
             }
 
             Section("Indicateur à l'écran") {

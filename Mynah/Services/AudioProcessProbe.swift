@@ -14,11 +14,21 @@
 import Foundation
 import CoreAudio
 
+/// What a process records while it plays.
+enum InputCapture: Equatable {
+    case none
+    /// Recording while a microphone is open somewhere. CoreAudio only says a
+    /// device is in use, not by whom, so this is the best reading available.
+    case microphone
+    /// Recording with no microphone open anywhere: the input is other apps'
+    /// audio, read through a process tap.
+    case appAudio
+}
+
 struct AudioProcess: Equatable {
     let pid: pid_t
     let bundleID: String?
-    /// Whether the same process is also capturing audio while it plays.
-    let isCapturingInput: Bool
+    let capture: InputCapture
 }
 
 @MainActor
@@ -30,15 +40,24 @@ protocol AudioProcessProbe {
 enum AudioSourceKind {
     case communication
     case player
+    /// Plays back what it taps from other apps — a per-app volume mixer, a
+    /// visualiser. Not a source of its own, and not a conversation either.
+    case relay
 }
 
 /// Communication apps must never be interrupted, so anything that looks like
 /// one is left alone.
 ///
 /// The primary signal is behavioural rather than a name: a process that plays
-/// *and* records at the same time is holding a conversation, not playing music.
-/// That covers apps nobody listed — a Google Meet in a browser tab included,
-/// which no bundle ID could ever catch since it shares its process with YouTube.
+/// *and* records from a microphone at the same time is holding a conversation,
+/// not playing music. That covers apps nobody listed — a Google Meet in a
+/// browser tab included, which no bundle ID could ever catch since it shares
+/// its process with YouTube.
+///
+/// Recording alone is not that signal. A per-app volume mixer taps every app's
+/// audio and plays it back, so it runs input and output whenever music plays;
+/// read as a call, it made Mynah abstain exactly when there was music to
+/// pause. A tap opens no microphone, which is what sets the two apart.
 ///
 /// The name list is a fallback for the case the behavioural signal misses:
 /// Apple routes FaceTime audio through daemons, and the daemon that plays the
@@ -47,9 +66,9 @@ enum AudioSourceKind {
 /// Over-approximating here is safe. Calling a player a communication app only
 /// ever makes Mynah abstain; it can never make it act wrongly.
 func classify(_ process: AudioProcess) -> AudioSourceKind {
-    if process.isCapturingInput { return .communication }
-    guard let bundleID = process.bundleID else { return .player }
-    return communicationBundleIDs.contains(bundleID) ? .communication : .player
+    if process.capture == .microphone { return .communication }
+    if let bundleID = process.bundleID, communicationBundleIDs.contains(bundleID) { return .communication }
+    return process.capture == .appAudio ? .relay : .player
 }
 
 /// The daemon macOS renders alert sounds through — Mynah's own dictation
@@ -110,7 +129,9 @@ struct CoreAudioProcessProbe: AudioProcessProbe {
     private let ownBundleID = Bundle.main.bundleIdentifier
 
     func outputtingProcesses() -> [AudioProcess] {
-        processObjects().compactMap { object in
+        let microphoneOpen = isAnyMicrophoneOpen()
+
+        return objectList(kAudioHardwarePropertyProcessObjectList).compactMap { object in
             guard readUInt32(object, kAudioProcessPropertyIsRunningOutput) == 1,
                   let pid = readPID(object),
                   // Our own confirmation sound would otherwise read as a player.
@@ -120,20 +141,36 @@ struct CoreAudioProcessProbe: AudioProcessProbe {
             let bundleID = readString(object, kAudioProcessPropertyBundleID)
             guard !isIgnoredSource(bundleID: bundleID, ownBundleID: ownBundleID) else { return nil }
 
-            return AudioProcess(
-                pid: pid,
-                bundleID: bundleID,
-                isCapturingInput: readUInt32(object, kAudioProcessPropertyIsRunningInput) == 1
-            )
+            let capture: InputCapture = if readUInt32(object, kAudioProcessPropertyIsRunningInput) != 1 {
+                .none
+            } else {
+                microphoneOpen ? .microphone : .appAudio
+            }
+            return AudioProcess(pid: pid, bundleID: bundleID, capture: capture)
         }
     }
 
-    private func processObjects() -> [AudioObjectID] {
+    /// Whether any device that records is in use. Read at the device level, so
+    /// a device that both records and plays counts as open while it only plays:
+    /// the error falls on the safe side, a relay taken for a call.
+    private func isAnyMicrophoneOpen() -> Bool {
+        objectList(kAudioHardwarePropertyDevices).contains { device in
+            hasInputStreams(device) && readUInt32(device, kAudioDevicePropertyDeviceIsRunningSomewhere) == 1
+        }
+    }
+
+    private func hasInputStreams(_ device: AudioObjectID) -> Bool {
         var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyProcessObjectList,
-            mScope: kAudioObjectPropertyScopeGlobal,
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioObjectPropertyScopeInput,
             mElement: kAudioObjectPropertyElementMain
         )
+        var size: UInt32 = 0
+        return AudioObjectGetPropertyDataSize(device, &address, 0, nil, &size) == noErr && size > 0
+    }
+
+    private func objectList(_ selector: AudioObjectPropertySelector) -> [AudioObjectID] {
+        var address = propertyAddress(selector)
         let system = AudioObjectID(kAudioObjectSystemObject)
 
         var size: UInt32 = 0

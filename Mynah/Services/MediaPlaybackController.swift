@@ -18,10 +18,23 @@
 
 import Foundation
 import AppKit
+import ApplicationServices
 
 @MainActor
 protocol MediaKeySender {
+    /// False when the system would drop the key. It does so without a word,
+    /// so this has to be asked rather than read off the outcome.
+    var canSend: Bool { get }
     func sendPlayPause()
+}
+
+/// What the floating indicator says about the playback.
+enum MediaPauseStatus: Equatable {
+    case idle
+    /// Paused by us, and the verification found no player woken by the key.
+    case paused
+    /// Something is playing, but the key cannot be sent: no Accessibility.
+    case blocked
 }
 
 @MainActor
@@ -32,6 +45,7 @@ protocol PlaybackStateTracker {
 // MARK: - Controller
 
 @MainActor
+@Observable
 final class MediaPlaybackController {
 
     private let probe: AudioProcessProbe
@@ -41,8 +55,14 @@ final class MediaPlaybackController {
     private let verifyDelay: Duration
 
     /// True while a player is paused *by us* and is owed a resume.
-    private(set) var didPause = false
-    private var verification: Task<Void, Never>?
+    @ObservationIgnored private(set) var didPause = false
+    /// `.paused` only once verified, so a pause undone right away never
+    /// flashes on screen.
+    private(set) var pauseStatus = MediaPauseStatus.idle
+    @ObservationIgnored private var verification: Task<Void, Never>?
+    /// Bumped by every dictation start, so a resume still waiting on the
+    /// verification can tell that a newer dictation now owns the pause.
+    @ObservationIgnored private var dictation = 0
 
     /// `verifyDelay` covers the gap between the media key landing and the woken
     /// player showing up as playing. Measured at 74-84 ms on this hardware, for
@@ -64,12 +84,14 @@ final class MediaPlaybackController {
     /// Returns as soon as the key is sent — the check runs on its own, so
     /// nothing is added to the delay before the microphone opens.
     func pauseForRecording() {
-        verification?.cancel()
-        verification = nil
+        dictation += 1
 
         // Already paused by us and never resumed. The key would start playback
-        // rather than stop it, so keep the debt for the resume that follows.
-        guard !didPause, isEnabled() else { return }
+        // rather than stop it, so this dictation takes the debt over, along
+        // with a verification that may still be running.
+        guard !didPause else { return }
+        pauseStatus = .idle
+        guard isEnabled() else { return }
 
         let playing = probe.outputtingProcesses()
         guard !playing.isEmpty,
@@ -78,13 +100,24 @@ final class MediaPlaybackController {
 
         // Players that explicitly report as paused (e.g. Spotify or Music)
         // keep their CoreAudio output alive with silence. Skip them so we
-        // don't toggle them into playing.
+        // don't toggle them into playing. Relays too: what they output is
+        // another app's audio, which is no reason to send the key on its own.
         let activePlayers = playing.filter { process in
+            guard classify(process) == .player else { return false }
             guard let bundleID = process.bundleID else { return true }
             return !stateTracker.isKnownPaused(bundleID: bundleID)
         }
         guard !activePlayers.isEmpty else { return }
 
+        // A dropped key leaves the music playing, and the verification below,
+        // seeing nothing new start, would confirm a pause that never happened.
+        guard keySender.canSend else {
+            pauseStatus = .blocked
+            return
+        }
+
+        // Relays included: one already outputting must not pass for a player
+        // the key just woke.
         let playingBefore = Set(playing.map(\.pid))
         keySender.sendPlayPause()
         didPause = true
@@ -101,6 +134,8 @@ final class MediaPlaybackController {
             if !playingNow.subtracting(playingBefore).isEmpty {
                 self.keySender.sendPlayPause()
                 self.didPause = false
+            } else {
+                self.pauseStatus = .paused
             }
         }
     }
@@ -111,26 +146,41 @@ final class MediaPlaybackController {
     /// Deliberately not conditioned on the paused player having gone quiet:
     /// players keep their audio unit alive for seconds after a pause, so
     /// demanding proof of silence would strand the music paused.
-    func resumeAfterRecording() async {
-        if let verification { await verification.value }
-        verification = nil
+    ///
+    /// Synchronous on purpose: which dictation the resume belongs to is decided
+    /// at the call, not when a task gets to run — by then the next dictation
+    /// may have started, and the music would come back in the middle of it.
+    @discardableResult
+    func resumeAfterRecording() -> Task<Void, Never> {
+        let owner = dictation
+        let pending = verification
+        return Task { [weak self] in
+            await pending?.value
+            // A dictation started meanwhile carries the pause on; its own
+            // resume settles it.
+            guard let self, self.dictation == owner else { return }
+            self.verification = nil
+            self.pauseStatus = .idle
 
-        guard didPause else { return }
-        didPause = false
-        keySender.sendPlayPause()
+            guard self.didPause else { return }
+            self.didPause = false
+            self.keySender.sendPlayPause()
+        }
     }
 }
 
 // MARK: - Real implementation
 
 /// Posts the system Play/Pause media key. Relies on the Accessibility
-/// permission the app already holds, so no new prompt is needed — posting a
-/// media key still requires it even though this goes through the HID event
-/// tap rather than the session tap ClipboardService uses.
+/// permission the paste already needs, so no new prompt is asked for —
+/// posting a media key still requires it even though this goes through the
+/// HID event tap rather than the session tap ClipboardService uses.
 struct SystemMediaKeySender: MediaKeySender {
 
     /// NX_KEYTYPE_PLAY from IOKit's hidsystem/ev_keymap.h.
     private static let playPauseKey: Int32 = 16
+
+    var canSend: Bool { AXIsProcessTrusted() }
 
     func sendPlayPause() {
         post(keyDown: true)

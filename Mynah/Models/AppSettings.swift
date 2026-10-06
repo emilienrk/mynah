@@ -60,6 +60,7 @@ final class AppSettings {
         _showTranscriptWhenNotPasted = (ud.object(forKey: "showTranscriptWhenNotPasted") as? Bool) ?? true
         _floatingIndicatorPositionX = ud.object(forKey: "floatingIndicatorPositionX") as? Double
         _floatingIndicatorPositionY = ud.object(forKey: "floatingIndicatorPositionY") as? Double
+        floatingIndicatorVisibleInCaptures = ud.bool(forKey: "floatingIndicatorVisibleInCaptures")
 
         if let data = ud.data(forKey: "favoritedModels"),
            let arr  = try? JSONDecoder().decode([String].self, from: data) {
@@ -357,6 +358,11 @@ final class AppSettings {
         get { _floatingIndicatorPositionY }
         set { _floatingIndicatorPositionY = newValue }
     }
+
+    /// No UI on purpose: only needed to record a demo. Read at launch, so set it with
+    /// `defaults write com.mynah.Mynah floatingIndicatorVisibleInCaptures -bool true`
+    /// and relaunch the app.
+    let floatingIndicatorVisibleInCaptures: Bool
 
     // MARK: - Derived helpers
 

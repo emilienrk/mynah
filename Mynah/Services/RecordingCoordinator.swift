@@ -41,6 +41,8 @@ struct DictationOutcome: Equatable {
         /// clipboard at all — the onboarding test run.
         case transcribed(String, PasteResult?)
         case silent
+        /// Dropped by the user, from the pill or with Escape.
+        case cancelled
     }
 
     /// Tells two identical outcomes in a row apart.
@@ -72,7 +74,7 @@ final class RecordingCoordinator {
     /// When the mic opened. Set before the model finishes loading, so a timer
     /// shown from here does not restart when the state moves on to `.recording`.
     private(set) var recordingStartedAt: Date?
-    /// Set when a dictation ends with a result — not when it is cancelled or fails.
+    /// Set when a dictation ends with a result or is cancelled — not when it fails.
     private(set) var lastOutcome: DictationOutcome?
 
     // MARK: Services (injected)
@@ -192,6 +194,8 @@ final class RecordingCoordinator {
         unloadTask?.cancel()
         unloadTask = nil
 
+        AccessibilityWaker.wakeFrontmostApp()
+
         // Reads audio per process and skips our own, so opening the mic right
         // after cannot pollute the reading. Returns before the key is verified.
         mediaPlayback.pauseForRecording()
@@ -246,7 +250,7 @@ final class RecordingCoordinator {
 
         // Resume right away rather than after transcription — a large model can
         // take seconds, and the silence is noticeable.
-        Task { await mediaPlayback.resumeAfterRecording() }
+        mediaPlayback.resumeAfterRecording()
 
         guard !samples.isEmpty else {
             unloadModel()
@@ -273,7 +277,7 @@ final class RecordingCoordinator {
             hotkeyManager.resetToggle()
             recordingStartedAt = nil
             _ = audioCapture.stopRecording()
-            Task { await mediaPlayback.resumeAfterRecording() }
+            mediaPlayback.resumeAfterRecording()
         case .transcribing:
             break
         case .idle, .pasting, .error:
@@ -285,7 +289,7 @@ final class RecordingCoordinator {
         pipelineTask?.cancel()
         pipelineTask = nil
         unloadModel()
-        pipelineState = .idle
+        endRun(with: .cancelled)
     }
 
     private func runTranscriptionAndPaste(samples: [Float]) async {
@@ -366,7 +370,7 @@ final class RecordingCoordinator {
         lastError = message
         pipelineState = .error(message)
         logger.error("Pipeline error: \(message, privacy: .public)")
-        Task { await mediaPlayback.resumeAfterRecording() }
+        mediaPlayback.resumeAfterRecording()
         // Auto-reset to idle after a short delay so the UI recovers.
         Task {
             try? await Task.sleep(for: .seconds(3))

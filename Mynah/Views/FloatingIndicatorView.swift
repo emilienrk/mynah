@@ -28,6 +28,8 @@ struct FloatingIndicatorView: View {
             .frame(minHeight: 40)
             // Same shape at two radii, so the pill morphs into the card.
             .background { PillBackground(cornerRadius: isCard ? 16 : 20) }
+            // The pause is confirmed after the pill is up: let it widen, not jump.
+            .animation(.spring(duration: 0.35, bounce: 0.2), value: coordinator.mediaPlayback.pauseStatus)
             .onHover(perform: onHover)
             .gesture(WindowDragGesture())
             // The panel never becomes key, so every click is a first click.
@@ -49,6 +51,10 @@ struct FloatingIndicatorView: View {
                     coordinator.cancelRecording()
                 }
                 InputMonitor(audioCapture: audioCapture, since: coordinator.recordingStartedAt)
+                    .id(model.dictation)
+                MediaPauseBadge(status: coordinator.mediaPlayback.pauseStatus) {
+                    coordinator.hotkeyManager.openAccessibilityPreferences()
+                }
                 ElapsedTime(since: coordinator.recordingStartedAt)
                 PillButton(systemImage: "stop.fill", role: .stop, label: "Arrêter et transcrire") {
                     coordinator.finishRecording()
@@ -90,6 +96,13 @@ struct FloatingIndicatorView: View {
                 systemImage: "waveform.slash",
                 tint: .secondary,
                 text: String(localized: "Aucune parole détectée")
+            )
+
+        case .cancelled:
+            outcome(
+                systemImage: "xmark.circle.fill",
+                tint: .secondary,
+                text: String(localized: "Dictée annulée")
             )
 
         case .error(let message):
@@ -299,6 +312,44 @@ private struct ElapsedTime: View {
         .font(.system(size: 12, weight: .medium).monospacedDigit())
         .foregroundStyle(.secondary)
         .frame(minWidth: 30, alignment: .trailing)
+    }
+}
+
+// MARK: - Paused media
+
+/// Says why the music stopped and that it comes back — or, in orange, that it
+/// was meant to stop and could not.
+private struct MediaPauseBadge: View {
+    let status: MediaPauseStatus
+    let openAccessibilitySettings: () -> Void
+
+    var body: some View {
+        switch status {
+        case .idle:
+            EmptyView()
+
+        case .paused:
+            Image(systemName: "music.note.slash")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .help(Text("Musique en pause — reprend à la fin de la dictée"))
+                .accessibilityLabel(Text("Musique en pause — reprend à la fin de la dictée"))
+                .transition(.blurReplace)
+
+        case .blocked:
+            Button(action: openAccessibilitySettings) {
+                Image(systemName: "music.note")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.orange)
+                    .symbolEffect(.pulse)
+                    .frame(width: 18, height: 26)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(Text("Musique non coupée : Mynah a besoin de l'autorisation Accessibilité. Cliquez pour ouvrir les Réglages."))
+            .accessibilityLabel(Text("Musique non coupée : Mynah a besoin de l'autorisation Accessibilité. Cliquez pour ouvrir les Réglages."))
+            .transition(.blurReplace)
+        }
     }
 }
 

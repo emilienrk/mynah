@@ -17,6 +17,7 @@ enum FloatingIndicatorPhase: Equatable {
     /// Nowhere to paste: the text is shown so it is not lost from sight.
     case copied(String)
     case silent
+    case cancelled
     case error(String)
 }
 
@@ -24,6 +25,9 @@ enum FloatingIndicatorPhase: Equatable {
 @Observable
 final class FloatingIndicatorModel {
     var phase: FloatingIndicatorPhase = .recording
+    /// Bumped for every dictation. A cancelled one leaves the phase on
+    /// `.recording`, and the next would carry on its waveform.
+    var dictation = 0
 }
 
 /// Never key: a key panel would take the keystrokes meant for the field the
@@ -58,6 +62,8 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
     private var fadeGeneration = 0
     /// Whether the current phase goes away on its own; hovering holds it.
     private var autoHides = false
+    /// Watches for ⌘V while the copied text is on screen.
+    private var pasteMonitor: Any?
 
     init(coordinator: RecordingCoordinator, audioCapture: AudioCaptureService, settings: AppSettings = .shared) {
         self.coordinator = coordinator
@@ -78,6 +84,9 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
 
         switch state {
         case .loadingModel, .recording:
+            if previousState != .loadingModel && previousState != .recording {
+                model.dictation += 1
+            }
             show(.recording)
 
         case .transcribing:
@@ -93,7 +102,7 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
             } else if case .error = previousState {
                 // Already on its way out, on the error's own delay.
             } else {
-                // Cancelled: the user asked for it to go, no need to linger.
+                // Nothing came of it — an empty capture — and nothing to say.
                 hide(animated: true)
             }
 
@@ -108,8 +117,16 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
         switch outcome {
         case .silent:
             show(.silent, hidingAfter: .seconds(1.6))
+        case .cancelled:
+            // Short: Escape is pressed eyes elsewhere, and a fade alone looks
+            // the same as a dictation ending — or a crash.
+            show(.cancelled, hidingAfter: .seconds(0.8))
         case .transcribed(let text, .copiedOnly) where settings.showTranscriptWhenNotPasted:
             show(.copied(text), hidingAfter: .seconds(8))
+            watchForPaste(of: text)
+        case .transcribed(let text, .copiedOnly):
+            show(.done(.copiedOnly), hidingAfter: .seconds(1.1))
+            watchForPaste(of: text)
         case .transcribed(_, let result):
             show(.done(result), hidingAfter: .seconds(1.1))
         }
@@ -144,6 +161,41 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
 
         autoHides = delay != nil
         if let delay { scheduleHide(after: delay) }
+        // Whatever comes next no longer asks for ⌘V; the callers that do re-arm it.
+        stopWatchingForPaste()
+    }
+
+    /// The indicator asks for ⌘V, and pasting our text into a field ends its
+    /// job: it turns into "Collé". Any other ⌘V leaves it be — the key alone
+    /// proves nothing was pasted. Seeing keystrokes meant for other apps takes
+    /// Accessibility; without it, it times out as before.
+    private func watchForPaste(of text: String) {
+        stopWatchingForPaste()
+        pasteMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.modifierFlags.contains(.command),
+                  event.charactersIgnoringModifiers?.lowercased() == "v"
+            else { return }
+            DispatchQueue.main.async {
+                // Gone already when a dictation took the pill over in between.
+                guard let self, self.pasteMonitor != nil else { return }
+
+                // Something else is being pasted: the user may come back for
+                // the text afterwards, with "Copier à nouveau". Keep the card.
+                guard NSPasteboard.general.string(forType: .string) == text else { return }
+                // Only a field we can see proves the text landed; same rule as
+                // the auto-paste.
+                guard systemFocusState() == .editable else { return }
+
+                self.stopWatchingForPaste()
+                self.show(.done(.pasted), hidingAfter: .seconds(1.1))
+            }
+        }
+    }
+
+    private func stopWatchingForPaste() {
+        guard let pasteMonitor else { return }
+        NSEvent.removeMonitor(pasteMonitor)
+        self.pasteMonitor = nil
     }
 
     private func scheduleHide(after delay: Duration) {
@@ -171,6 +223,7 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
         hideTask?.cancel()
         hideTask = nil
         autoHides = false
+        stopWatchingForPaste()
         fadeGeneration += 1
         guard let panel, panel.isVisible else { return }
 
@@ -237,8 +290,9 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
         panel.isReleasedWhenClosed = false
         panel.animationBehavior = .none
         // Left out of screen sharing and recordings: it is a control for the
-        // person dictating, not part of what they are showing.
-        panel.sharingType = .none
+        // person dictating, not part of what they are showing — unless a demo
+        // of the app itself is being recorded.
+        panel.sharingType = settings.floatingIndicatorVisibleInCaptures ? .readOnly : .none
         panel.delegate = self
 
         self.panel = panel

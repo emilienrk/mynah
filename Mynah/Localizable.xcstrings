@@ -1772,6 +1772,72 @@
         }
       }
     },
+    "Mynah %@ est disponible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mynah %@ is available"
+          }
+        }
+      }
+    },
+    "Cliquez pour voir les nouveautés et installer la mise à jour.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to see what's new and install the update."
+          }
+        }
+      }
+    },
+    "Musique en pause — reprend à la fin de la dictée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music paused — resumes when the dictation ends"
+          }
+        }
+      }
+    },
+    "Musique non coupée : Mynah a besoin de l'autorisation Accessibilité. Cliquez pour ouvrir les Réglages.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music not paused: Mynah needs the Accessibility permission. Click to open System Settings."
+          }
+        }
+      }
+    },
+    "Sans l'autorisation Accessibilité, Mynah ne peut pas mettre la musique en pause.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Without the Accessibility permission, Mynah cannot pause the music."
+          }
+        }
+      }
+    },
+    "Dictée annulée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation cancelled"
+          }
+        }
+      }
+    },
     "Version %@ installée": {
       "extractionState": "manual",
       "localizations": {

@@ -28,5 +28,7 @@
 	<string>https://github.com/emilienrk/mynah/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>+BIJxDTK42OgI/4W1HXnyo2OHMDPmswJ4kBAKbppgjQ=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>3600</integer>
 </dict>
 </plist>

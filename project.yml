@@ -30,6 +30,8 @@ targets:
         SUFeedURL: "https://github.com/emilienrk/mynah/releases/latest/download/appcast.xml"
         SUPublicEDKey: "+BIJxDTK42OgI/4W1HXnyo2OHMDPmswJ4kBAKbppgjQ="
         SUEnableAutomaticChecks: true
+        # Sparkle's floor; its default of a day leaves a release unseen until tomorrow.
+        SUScheduledCheckInterval: 3600
     preBuildScripts:
       - name: Generate EngineBuildInfo
         script: |

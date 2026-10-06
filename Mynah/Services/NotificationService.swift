@@ -15,8 +15,10 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     nonisolated static let recordingCategoryIdentifier = "RECORDING_DURATION_CATEGORY"
     nonisolated static let stopActionIdentifier = "STOP_RECORDING_ACTION"
+    nonisolated static let updateNotificationIdentifier = "com.mynah.update-available"
 
     var onStopRecordingRequested: (() -> Void)?
+    var onShowUpdateRequested: (() -> Void)?
 
     private var isConfigured = false
 
@@ -109,6 +111,32 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         logger.info("Sent recording duration notification for \(minutes) min")
     }
 
+    func sendUpdateAvailable(version: String) async {
+        guard isNotificationAvailable else { return }
+        await requestAuthorizationIfNeeded()
+
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .notDetermined else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Mynah \(version) est disponible")
+        content.body  = String(localized: "Cliquez pour voir les nouveautés et installer la mise à jour.")
+
+        // A fixed identifier: a newer version found later replaces this one.
+        let request = UNNotificationRequest(
+            identifier: Self.updateNotificationIdentifier,
+            content: content,
+            trigger: nil
+        )
+        try? await center.add(request)
+    }
+
+    func removeUpdateNotification() {
+        guard isNotificationAvailable else { return }
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.updateNotificationIdentifier])
+    }
+
     // MARK: - UNUserNotificationCenterDelegate
 
     nonisolated func userNotificationCenter(
@@ -125,7 +153,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let actionId = response.actionIdentifier
-        if actionId == Self.stopActionIdentifier || actionId == UNNotificationDefaultActionIdentifier {
+        if response.notification.request.identifier == Self.updateNotificationIdentifier {
+            Task { @MainActor in
+                NotificationService.shared.onShowUpdateRequested?()
+            }
+        } else if actionId == Self.stopActionIdentifier || actionId == UNNotificationDefaultActionIdentifier {
             Task { @MainActor in
                 NotificationService.shared.onStopRecordingRequested?()
             }

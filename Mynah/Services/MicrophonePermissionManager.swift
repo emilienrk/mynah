@@ -40,6 +40,12 @@ final class MicrophonePermissionManager {
         status = granted ? .granted : .denied
     }
 
+    /// Picks up a change made in System Settings, which notifies no one.
+    func refresh() {
+        let current = Self.currentStatus()
+        if current != status { status = current }
+    }
+
     /// Opens System Settings to the Microphone Privacy pane.
     func openSystemPreferences() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {

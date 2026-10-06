@@ -12,8 +12,7 @@ import AVFoundation
 struct PermissionsSection: View {
     @Bindable var micManager: MicrophonePermissionManager
 
-    /// Refreshes AX trust status on appear and on button tap.
-    @State private var isAXTrusted: Bool = false
+    @State private var isAXTrusted: Bool = AXIsProcessTrusted()
 
     var body: some View {
         Form {
@@ -21,7 +20,17 @@ struct PermissionsSection: View {
             accessibilitySection
         }
         .formStyle(.grouped)
-        .onAppear { refreshAXStatus() }
+        // A grant made in System Settings notifies no one: poll until nothing is
+        // missing. The window is kept when closed, so the tab may never disappear.
+        .task {
+            refreshAXStatus()
+            micManager.refresh()
+            while !Task.isCancelled, !isAXTrusted || !micManager.canRecord {
+                try? await Task.sleep(for: .seconds(1))
+                refreshAXStatus()
+                micManager.refresh()
+            }
+        }
     }
 
     // MARK: - Microphone
@@ -84,11 +93,6 @@ struct PermissionsSection: View {
                 if !isAXTrusted {
                     permissionButton(label: "Ouvrir les Réglages", icon: "arrow.up.right.square") {
                         openAXPreferences()
-                        // Refresh after a short delay (user may grant while settings are open)
-                        Task {
-                            try? await Task.sleep(for: .seconds(2))
-                            refreshAXStatus()
-                        }
                     }
                 }
             } label: {
@@ -97,9 +101,16 @@ struct PermissionsSection: View {
         } header: {
             Text("Accessibilité")
         } footer: {
-            Text("Requise pour simuler Cmd+V et coller le texte transcrit dans l'application active.\nDans Réglages → Confidentialité & Sécurité → Accessibilité, activez Mynah.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Requise pour simuler Cmd+V et coller le texte transcrit dans l'application active.\nDans Réglages → Confidentialité & Sécurité → Accessibilité, activez Mynah.")
+                if !isAXTrusted {
+                    // macOS ties the grant to one exact build: after an update
+                    // the switch stays on but no longer applies to this copy.
+                    Text("Mynah est déjà coché ? Retirez-le de la liste avec −, puis ajoutez-le à nouveau.")
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
         }
     }
 

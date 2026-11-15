@@ -165,9 +165,8 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
         stopWatchingForPaste()
     }
 
-    /// The indicator asks for ⌘V, and pasting our text into a field ends its
-    /// job: it turns into "Collé". Any other ⌘V leaves it be — the key alone
-    /// proves nothing was pasted. Seeing keystrokes meant for other apps takes
+    /// The indicator asks for ⌘V, and pasting our text ends its job. Any other
+    /// ⌘V leaves it be. Seeing keystrokes meant for other apps takes
     /// Accessibility; without it, it times out as before.
     private func watchForPaste(of text: String) {
         stopWatchingForPaste()
@@ -182,12 +181,15 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
                 // Something else is being pasted: the user may come back for
                 // the text afterwards, with "Copier à nouveau". Keep the card.
                 guard NSPasteboard.general.string(forType: .string) == text else { return }
-                // Only a field we can see proves the text landed; same rule as
-                // the auto-paste.
-                guard systemFocusState() == .editable else { return }
-
                 self.stopWatchingForPaste()
-                self.show(.done(.pasted), hidingAfter: .seconds(1.1))
+                // Only a field we can see proves the text landed, same rule as
+                // the auto-paste. Fields we cannot see — the very reason the
+                // card is up — still end it, just without claiming "Collé".
+                if systemFocusState() == .editable {
+                    self.show(.done(.pasted), hidingAfter: .seconds(1.1))
+                } else {
+                    self.hide(animated: true)
+                }
             }
         }
     }
@@ -255,6 +257,14 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
         hideTask = nil
     }
 
+    /// Once the text is copied the card has done its job, even after a scroll
+    /// held it: it goes shortly after the pointer leaves for the target field.
+    private func releaseAfterCopy() {
+        autoHides = true
+        hideTask?.cancel()
+        hideTask = nil
+    }
+
     // MARK: - Panel
 
     private func panelCreatedIfNeeded() -> FloatingIndicatorPanel {
@@ -266,6 +276,7 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
             audioCapture: audioCapture,
             onHover: { [weak self] in self?.pointerHovered($0) },
             onEngage: { [weak self] in self?.holdUntilDismissed() },
+            onCopy: { [weak self] in self?.releaseAfterCopy() },
             onDismiss: { [weak self] in self?.hide(animated: true) }
         ))
         // The window keeps its size; the pill moves inside it.

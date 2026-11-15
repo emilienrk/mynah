@@ -15,6 +15,7 @@ struct FloatingIndicatorView: View {
     let onHover: (Bool) -> Void
     /// The user is working with what is shown — scrolling it, copying it.
     let onEngage: () -> Void
+    let onCopy: () -> Void
     let onDismiss: () -> Void
 
     private var isCard: Bool {
@@ -87,6 +88,7 @@ struct FloatingIndicatorView: View {
                 text: text,
                 clipboard: coordinator.clipboardService,
                 onEngage: onEngage,
+                onCopy: onCopy,
                 onDismiss: onDismiss
             )
                 .transition(.blurReplace)
@@ -171,6 +173,7 @@ private struct CopiedCard: View {
     let text: String
     let clipboard: ClipboardService
     let onEngage: () -> Void
+    let onCopy: () -> Void
     let onDismiss: () -> Void
 
     @State private var didCopy = false
@@ -230,7 +233,7 @@ private struct CopiedCard: View {
                 ) {
                     clipboard.copyToClipboard(text)
                     didCopy = true
-                    onEngage()
+                    onCopy()
                 }
                 .contentTransition(.symbolEffect(.replace))
                 PillButton(systemImage: "xmark", role: .cancel, label: "Fermer", action: onDismiss)

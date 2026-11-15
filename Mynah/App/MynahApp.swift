@@ -145,7 +145,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sc.hotkeyManager.setMode(s.hotKeyMode)
         sc.coordinator.modelURL = s.selectedModelURL
         sc.coordinator.language = s.selectedLanguage
-        sc.clipboardService.autoPasteEnabled = s.autoPasteEnabled
     }
 
     // MARK: - Observation loop

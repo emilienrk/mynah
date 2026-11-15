@@ -60,6 +60,10 @@ struct GeneralSection: View {
                     isOn: $settings.autoPasteEnabled
                 )
 
+                if settings.autoPasteEnabled && !settings.alwaysPasteBundleIDs.isEmpty {
+                    AlwaysPasteAppsRow(settings: settings)
+                }
+
                 SettingsToggleRow(
                     label: "Sons de dictée",
                     description: "Émet un son bref au démarrage de l'enregistrement et quand la transcription est prête.",
@@ -171,6 +175,67 @@ struct GeneralSection: View {
         .onAppear {
             availableSounds = SystemSoundLibrary.availableNames
             settings.refreshLaunchAtLogin()
+        }
+    }
+}
+
+// MARK: - Always-paste apps
+
+/// The apps added from the floating indicator, where Mynah pastes without
+/// seeing a field. Stored by bundle identifier; name and icon are looked up.
+private struct AlwaysPasteAppsRow: View {
+    @Bindable var settings: AppSettings
+
+    private struct App: Identifiable {
+        let id: String
+        let name: String
+        let icon: NSImage?
+    }
+
+    /// An app since uninstalled still shows, by its identifier, so it can be removed.
+    private var apps: [App] {
+        settings.alwaysPasteBundleIDs.map { bundleID in
+            guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+                return App(id: bundleID, name: bundleID, icon: nil)
+            }
+            return App(
+                id: bundleID,
+                name: url.deletingPathExtension().lastPathComponent,
+                icon: NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
+            )
+        }
+        .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Toujours coller dans ces apps")
+                Text("Mynah y colle même sans voir de champ de texte, et laisse le texte dans le presse-papier au cas où.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            ForEach(apps) { app in
+                HStack(spacing: 8) {
+                    Group {
+                        if let icon = app.icon {
+                            Image(nsImage: icon).resizable()
+                        } else {
+                            Image(systemName: "app.dashed").resizable().foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(width: 18, height: 18)
+                    Text(verbatim: app.name)
+                    Spacer()
+                    Button("Retirer") {
+                        settings.alwaysPasteBundleIDs.remove(app.id)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
         }
     }
 }

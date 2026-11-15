@@ -33,6 +33,7 @@ final class AppSettings {
         selectedModelFilename  = ud.string(forKey: "selectedModel") ?? "ggml-base.bin"
         languageCode           = ud.string(forKey: "language") ?? "auto"
         _autoPasteEnabled      = (ud.object(forKey: "autoPaste") as? Bool) ?? true
+        alwaysPasteBundleIDs   = Set(ud.stringArray(forKey: "alwaysPasteBundleIDs") ?? [])
         // Not persisted: macOS owns this one. A stale UserDefaults value could
         // show the toggle on while the app was never registered (fresh install
         // over leftover preferences) or off after the user removed it from
@@ -136,6 +137,12 @@ final class AppSettings {
     var autoPasteEnabled: Bool {
         get { _autoPasteEnabled }
         set { _autoPasteEnabled = newValue }
+    }
+
+    /// Apps pasted into even with no field in sight — the ones that expose
+    /// nothing to Accessibility. The text then stays on the pasteboard.
+    var alwaysPasteBundleIDs: Set<String> {
+        didSet { UserDefaults.standard.set(alwaysPasteBundleIDs.sorted(), forKey: "alwaysPasteBundleIDs") }
     }
 
     private var _launchAtLogin: Bool

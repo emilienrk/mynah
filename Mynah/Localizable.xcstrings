@@ -2871,6 +2871,61 @@
           }
         }
       }
+    },
+    "Collé — ⌘V sinon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasted — ⌘V otherwise"
+          }
+        }
+      }
+    },
+    "Toujours coller dans %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always paste into %@"
+          }
+        }
+      }
+    },
+    "Toujours coller dans ces apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always paste into these apps"
+          }
+        }
+      }
+    },
+    "Mynah y colle même sans voir de champ de texte, et laisse le texte dans le presse-papier au cas où.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mynah pastes there even without seeing a text field, and leaves the text on the clipboard just in case."
+          }
+        }
+      }
+    },
+    "Retirer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

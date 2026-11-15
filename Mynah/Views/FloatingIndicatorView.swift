@@ -16,6 +16,7 @@ struct FloatingIndicatorView: View {
     /// The user is working with what is shown — scrolling it, copying it.
     let onEngage: () -> Void
     let onCopy: () -> Void
+    let onAlwaysPaste: (PasteTarget) -> Void
     let onDismiss: () -> Void
 
     private var isCard: Bool {
@@ -76,6 +77,22 @@ struct FloatingIndicatorView: View {
             }
             .transition(.blurReplace)
 
+        case .done(.pastedUnverified):
+            // Nothing confirmed the paste: no green tick.
+            outcome(
+                systemImage: "checkmark.circle",
+                tint: .secondary,
+                text: doneText(for: .pastedUnverified)
+            )
+
+        case .done(.copiedOnly(let target)):
+            outcome(
+                systemImage: "checkmark.circle.fill",
+                tint: .green,
+                text: doneText(for: .copiedOnly(target)),
+                offering: target
+            )
+
         case .done(let result):
             outcome(
                 systemImage: "checkmark.circle.fill",
@@ -83,12 +100,14 @@ struct FloatingIndicatorView: View {
                 text: doneText(for: result)
             )
 
-        case .copied(let text):
+        case .copied(let text, let target):
             CopiedCard(
                 text: text,
+                target: target,
                 clipboard: coordinator.clipboardService,
                 onEngage: onEngage,
                 onCopy: onCopy,
+                onAlwaysPaste: onAlwaysPaste,
                 onDismiss: onDismiss
             )
                 .transition(.blurReplace)
@@ -116,7 +135,12 @@ struct FloatingIndicatorView: View {
         }
     }
 
-    private func outcome(systemImage: String, tint: some ShapeStyle, text: String) -> some View {
+    private func outcome(
+        systemImage: String,
+        tint: some ShapeStyle,
+        text: String,
+        offering target: PasteTarget? = nil
+    ) -> some View {
         HStack(spacing: 7) {
             Image(systemName: systemImage)
                 .font(.system(size: 14, weight: .semibold))
@@ -129,15 +153,21 @@ struct FloatingIndicatorView: View {
                 .truncationMode(.tail)
                 .frame(maxWidth: 300, alignment: .leading)
                 .fixedSize()
+            if let target {
+                AlwaysPasteButton(target: target, style: .icon, action: onAlwaysPaste)
+            }
         }
-        .padding(.horizontal, 10)
+        // A trailing button sits on the pill's own inset, like the recording ones.
+        .padding(.leading, 10)
+        .padding(.trailing, target == nil ? 10 : 0)
         .transition(.blurReplace)
     }
 
     private func doneText(for result: PasteResult?) -> String {
         switch result {
-        case .pasted:     String(localized: "Collé")
-        case .copiedOnly: String(localized: "Copié — ⌘V pour coller")
+        case .pasted:           String(localized: "Collé")
+        case .pastedUnverified: String(localized: "Collé — ⌘V sinon")
+        case .copiedOnly:       String(localized: "Copié — ⌘V pour coller")
         case nil:         String(localized: "Transcrit")
         }
     }
@@ -171,9 +201,11 @@ private struct PillBackground: View {
 
 private struct CopiedCard: View {
     let text: String
+    let target: PasteTarget?
     let clipboard: ClipboardService
     let onEngage: () -> Void
     let onCopy: () -> Void
+    let onAlwaysPaste: (PasteTarget) -> Void
     let onDismiss: () -> Void
 
     @State private var didCopy = false
@@ -238,6 +270,10 @@ private struct CopiedCard: View {
                 .contentTransition(.symbolEffect(.replace))
                 PillButton(systemImage: "xmark", role: .cancel, label: "Fermer", action: onDismiss)
             }
+
+            if let target {
+                AlwaysPasteButton(target: target, style: .text, action: onAlwaysPaste)
+            }
         }
         .padding(EdgeInsets(top: 14, leading: 14, bottom: 8, trailing: 8))
         .frame(width: 360)
@@ -259,6 +295,50 @@ private struct CopiedCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.trailing, 6)
+    }
+}
+
+// MARK: - Always paste
+
+/// Puts the app the text was meant for on the always-paste list, for the apps
+/// that show Accessibility no field at all.
+private struct AlwaysPasteButton: View {
+    enum Style { case icon, text }
+
+    let target: PasteTarget
+    let style: Style
+    let action: (PasteTarget) -> Void
+
+    @State private var didAdd = false
+
+    var body: some View {
+        switch style {
+        case .icon:
+            PillButton(
+                systemImage: didAdd ? "checkmark" : "pin",
+                role: .cancel,
+                label: "Toujours coller dans \(target.name)",
+                action: add
+            )
+            .contentTransition(.symbolEffect(.replace))
+            .disabled(didAdd)
+
+        case .text:
+            Button(action: add) {
+                Label("Toujours coller dans \(target.name)", systemImage: didAdd ? "checkmark" : "pin")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.symbolEffect(.replace))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(didAdd)
+        }
+    }
+
+    private func add() {
+        action(target)
+        didAdd = true
     }
 }
 

@@ -14,8 +14,9 @@ enum FloatingIndicatorPhase: Equatable {
     case recording
     case transcribing
     case done(PasteResult?)
-    /// Nowhere to paste: the text is shown so it is not lost from sight.
-    case copied(String)
+    /// Nowhere to paste: the text is shown so it is not lost from sight, with
+    /// the app it was meant for when that app can go on the always-paste list.
+    case copied(String, PasteTarget?)
     case silent
     case cancelled
     case error(String)
@@ -121,12 +122,14 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
             // Short: Escape is pressed eyes elsewhere, and a fade alone looks
             // the same as a dictation ending — or a crash.
             show(.cancelled, hidingAfter: .seconds(0.8))
-        case .transcribed(let text, .copiedOnly) where settings.showTranscriptWhenNotPasted:
-            show(.copied(text), hidingAfter: .seconds(8))
+        case .transcribed(let text, .copiedOnly(let target)) where settings.showTranscriptWhenNotPasted:
+            show(.copied(text, target), hidingAfter: .seconds(8))
             watchForPaste(of: text)
-        case .transcribed(let text, .copiedOnly):
-            show(.done(.copiedOnly), hidingAfter: .seconds(1.1))
+        case .transcribed(let text, .copiedOnly(let target)):
+            show(.done(.copiedOnly(target)), hidingAfter: .seconds(1.1))
             watchForPaste(of: text)
+        case .transcribed(_, .pastedUnverified):
+            show(.done(.pastedUnverified), hidingAfter: .seconds(1.6))
         case .transcribed(_, let result):
             show(.done(result), hidingAfter: .seconds(1.1))
         }
@@ -277,6 +280,7 @@ final class FloatingIndicatorController: NSObject, NSWindowDelegate {
             onHover: { [weak self] in self?.pointerHovered($0) },
             onEngage: { [weak self] in self?.holdUntilDismissed() },
             onCopy: { [weak self] in self?.releaseAfterCopy() },
+            onAlwaysPaste: { [weak self] in self?.settings.alwaysPasteBundleIDs.insert($0.bundleID) },
             onDismiss: { [weak self] in self?.hide(animated: true) }
         ))
         // The window keeps its size; the pill moves inside it.

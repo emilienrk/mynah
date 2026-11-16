@@ -97,6 +97,7 @@ struct ClipboardServiceTests {
     private static let zed = PasteTarget(bundleID: "dev.zed.Zed", name: "Zed")
 
     /// Never posts a real ⌘V: `pastes` counts the keystrokes it would have sent.
+    /// Polling runs on virtual time, so a loaded CI runner cannot stretch it.
     @MainActor
     private final class Harness {
         let pasteboard = NSPasteboard(name: NSPasteboard.Name("com.mynah.tests.\(UUID().uuidString)"))
@@ -105,6 +106,8 @@ struct ClipboardServiceTests {
         var pastes = 0
         var autoPaste = true
         var alwaysPaste: Set<String> = []
+        let start = ContinuousClock.now
+        var waited: Duration = .zero
 
         init(focus: [FocusState]) {
             focusStates = focus
@@ -124,6 +127,8 @@ struct ClipboardServiceTests {
                 },
                 focusSettleTime: settleTime,
                 focusPollInterval: .milliseconds(10),
+                now: { self.start + self.waited },
+                pollWait: { self.waited += $0 },
                 frontmostApp: { ClipboardServiceTests.zed },
                 autoPasteEnabled: { self.autoPaste },
                 alwaysPasteApps: { self.alwaysPaste },
@@ -204,15 +209,14 @@ struct ClipboardServiceTests {
     @Test("Unknown focus that never settles ends copied, within the cap")
     func unknownFocusGivesUpAfterCap() async {
         let harness = Harness(focus: [.unknown])
-        let started = ContinuousClock.now
 
         let result = await harness.makeService(settleTime: .milliseconds(100)).copyAndPaste("the transcription")
 
         #expect(result == .copiedOnly(Self.zed))
         #expect(harness.pastes == 0)
         #expect(harness.focusReads > 1)
-        // The cap, plus the copy and some scheduling slack — not an open-ended wait.
-        #expect(ContinuousClock.now - started < .seconds(1))
+        // One poll past the cap at most — not an open-ended wait.
+        #expect(harness.waited <= .milliseconds(110))
     }
 
     @Test("A field clearly not editable is not asked again")

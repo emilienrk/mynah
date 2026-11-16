@@ -227,6 +227,8 @@ final class ClipboardService {
     private let focusState: @MainActor () -> FocusState
     private let focusSettleTime: Duration
     private let focusPollInterval: Duration
+    private let now: @MainActor () -> ContinuousClock.Instant
+    private let pollWait: @MainActor (Duration) async -> Void
     private let frontmostApp: @MainActor () -> PasteTarget?
     /// Read at paste time, so toggling the setting applies without a relaunch.
     private let autoPasteEnabled: @MainActor () -> Bool
@@ -240,6 +242,8 @@ final class ClipboardService {
         focusState: @escaping @MainActor () -> FocusState = systemFocusState,
         focusSettleTime: Duration = .milliseconds(400),
         focusPollInterval: Duration = .milliseconds(80),
+        now: @escaping @MainActor () -> ContinuousClock.Instant = { .now },
+        pollWait: @escaping @MainActor (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         frontmostApp: @escaping @MainActor () -> PasteTarget? = frontmostPasteTarget,
         autoPasteEnabled: @escaping @MainActor () -> Bool = { AppSettings.shared.autoPasteEnabled },
         alwaysPasteApps: @escaping @MainActor () -> Set<String> = { AppSettings.shared.alwaysPasteBundleIDs },
@@ -251,6 +255,8 @@ final class ClipboardService {
         self.focusState = focusState
         self.focusSettleTime = focusSettleTime
         self.focusPollInterval = focusPollInterval
+        self.now = now
+        self.pollWait = pollWait
         self.frontmostApp = frontmostApp
         self.autoPasteEnabled = autoPasteEnabled
         self.alwaysPasteApps = alwaysPasteApps
@@ -315,11 +321,10 @@ final class ClipboardService {
     /// a short dictation can end before it is ready: `unknown` is asked again
     /// for a moment, a hard cap on waiting for another process, not for us.
     private func settledFocusState() async -> FocusState {
-        let clock = ContinuousClock()
-        let deadline = clock.now + focusSettleTime
+        let deadline = now() + focusSettleTime
         var focus = focusState()
-        while focus == .unknown, clock.now < deadline {
-            try? await Task.sleep(for: focusPollInterval)
+        while focus == .unknown, now() < deadline {
+            await pollWait(focusPollInterval)
             focus = focusState()
         }
         return focus
